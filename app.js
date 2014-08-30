@@ -22,11 +22,15 @@ app.use(bodyParser.urlencoded());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', homePageRoutes.index);
-app.get('/index', homePageRoutes.index);
-app.get('/about', homePageRoutes.about);
-app.get('/login', homePageRoutes.login);
-app.get('/register', homePageRoutes.register);
+app.get('/', homePageRoutes.indexView);
+app.get('/index', homePageRoutes.indexView);
+app.get('/about', homePageRoutes.aboutView);
+app.get('/login', homePageRoutes.loginView);
+app.get('/register', homePageRoutes.registerView);
+app.post('/validateLoginData', homePageRoutes.validateLoginData);
+app.post('/login', homePageRoutes.login);
+app.post('/validateRegisterData', homePageRoutes.validateRegisterData);
+app.post('/register', homePageRoutes.register);
 
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {

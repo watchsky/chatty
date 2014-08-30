@@ -1,1 +1,37 @@
-登陆
+<h3 class="login-panel">用户登录</h3>
+<form action="/login" method="post" class="form-horizontal" role="form" onsubmit="return validateLoginData();">
+    <div class="form-group">
+        <span class="col-sm-offset-2 col-sm-10" id="errorMessage">
+        </span>
+    </div>
+    <div class="form-group">
+        <label for="inputUserName" class="col-sm-2 control-label">用户名</label>
+
+        <div class="col-sm-5">
+            <input type="text" class="form-control" id="inputUserName" name="inputUserName" placeholder="用户名">
+        </div>
+        <span class="col-sm-5" id="userNameValidationMessage"></span>
+    </div>
+    <div class="form-group">
+        <label for="inputPassword" class="col-sm-2 control-label">密码</label>
+
+        <div class="col-sm-5">
+            <input type="password" class="form-control" id="inputPassword" name="inputPassword" placeholder="密码">
+        </div>
+        <span class="col-sm-5" id="passwordValidationMessage"></span>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="rememberMe"> 记住我
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default" id="loginButton">登录</button>
+        </div>
+    </div>
+</form>

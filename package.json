@@ -13,6 +13,7 @@
     "body-parser": "~1.0.0",
     "debug": "~0.7.4",
     "ejs": "~0.8.5",
-    "express-partials": "*"
+    "express-partials": "*",
+    "mongodb": "1.4.9"
   }
 }

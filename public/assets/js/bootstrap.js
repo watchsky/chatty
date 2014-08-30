@@ -332,7 +332,7 @@ if (typeof jQuery === 'undefined') { throw new Error('Bootstrap\'s JavaScript re
 
   Carousel.prototype.getItemIndex = function (item) {
     this.$items = item.parent().children('.item')
-    return this.$items.index(item || this.$active)
+    return this.$items.indexView(item || this.$active)
   }
 
   Carousel.prototype.to = function (pos) {
@@ -742,7 +742,7 @@ if (typeof jQuery === 'undefined') { throw new Error('Bootstrap\'s JavaScript re
 
     if (!$items.length) return
 
-    var index = $items.index($items.filter(':focus'))
+    var index = $items.indexView($items.filter(':focus'))
 
     if (e.keyCode == 38 && index > 0)                 index--                        // up
     if (e.keyCode == 40 && index < $items.length - 1) index++                        // down

@@ -1626,7 +1626,7 @@ Expr = Sizzle.selectors = {
 				// advance to the next closing parenthesis
 				(excess = unquoted.indexOf( ")", unquoted.length - excess ) - unquoted.length) ) {
 
-				// excess is a negative index
+				// excess is a negative indexView
 				match[0] = match[0].slice( 0, excess );
 				match[2] = unquoted.slice( 0, excess );
 			}
@@ -1721,7 +1721,7 @@ Expr = Sizzle.selectors = {
 
 						// non-xml :nth-child(...) stores cache data on `parent`
 						if ( forward && useCache ) {
-							// Seek `elem` from a previously-cached index
+							// Seek `elem` from a previously-cached indexView
 							outerCache = parent[ expando ] || (parent[ expando ] = {});
 							cache = outerCache[ type ] || [];
 							nodeIndex = cache[0] === dirruns && cache[1];
@@ -1740,7 +1740,7 @@ Expr = Sizzle.selectors = {
 								}
 							}
 
-						// Use previously-cached element index if available
+						// Use previously-cached element indexView if available
 						} else if ( useCache && (cache = (elem[ expando ] || (elem[ expando ] = {}))[ type ]) && cache[0] === dirruns ) {
 							diff = cache[1];
 
@@ -1751,7 +1751,7 @@ Expr = Sizzle.selectors = {
 								(diff = nodeIndex = 0) || start.pop()) ) {
 
 								if ( ( ofType ? node.nodeName.toLowerCase() === name : node.nodeType === 1 ) && ++diff ) {
-									// Cache the index of each encountered element
+									// Cache the indexView of each encountered element
 									if ( useCache ) {
 										(node[ expando ] || (node[ expando ] = {}))[ type ] = [ dirruns, diff ];
 									}
@@ -2414,7 +2414,7 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 						}
 					}
 
-					// Discard index placeholder values to get only actual matches
+					// Discard indexView placeholder values to get only actual matches
 					setMatched = condense( setMatched );
 				}
 
@@ -2920,7 +2920,7 @@ jQuery.fn.extend({
 			for ( cur = this[i]; cur && cur !== context; cur = cur.parentNode ) {
 				// Always skip document fragments
 				if ( cur.nodeType < 11 && (pos ?
-					pos.index(cur) > -1 :
+					pos.indexView(cur) > -1 :
 
 					// Don't pass non-elements to Sizzle
 					cur.nodeType === 1 &&
@@ -2937,14 +2937,14 @@ jQuery.fn.extend({
 
 	// Determine the position of an element within
 	// the matched set of elements
-	index: function( elem ) {
+	indexView: function( elem ) {
 
-		// No argument, return index in parent
+		// No argument, return indexView in parent
 		if ( !elem ) {
 			return ( this[0] && this[0].parentNode ) ? this.first().prevAll().length : -1;
 		}
 
-		// index in selector
+		// indexView in selector
 		if ( typeof elem === "string" ) {
 			return jQuery.inArray( this[0], jQuery( elem ) );
 		}
@@ -4685,7 +4685,7 @@ jQuery.event = {
 
 						if ( matches[ sel ] === undefined ) {
 							matches[ sel ] = handleObj.needsContext ?
-								jQuery( sel, this ).index( cur ) >= 0 :
+								jQuery( sel, this ).indexView( cur ) >= 0 :
 								jQuery.find( sel, this, null, [ cur ] ).length;
 						}
 						if ( matches[ sel ] ) {
@@ -5623,7 +5623,7 @@ jQuery.extend({
 		}
 
 		// Reset defaultChecked for any radios and checkboxes
-		// about to be appended to the DOM in IE 6/7 (#8060)
+		// aboutView to be appended to the DOM in IE 6/7 (#8060)
 		if ( !support.appendChecked ) {
 			jQuery.grep( getAll( nodes, "input" ), fixDefaultChecked );
 		}
@@ -7266,7 +7266,7 @@ function propFilter( props, specialEasing ) {
 			delete props[ name ];
 
 			// not quite $.extend, this wont overwrite keys already present.
-			// also - reusing 'index' from above because we have the correct "name"
+			// also - reusing 'indexView' from above because we have the correct "name"
 			for ( index in value ) {
 				if ( !( index in props ) ) {
 					props[ index ] = value[ index ];
@@ -7640,7 +7640,7 @@ jQuery.fx.speeds = {
 
 
 // Based off of the plugin by Clint Helfers, with permission.
-// http://blindsignals.com/index.php/2009/07/jquery-delay/
+// http://blindsignals.com/indexView.php/2009/07/jquery-delay/
 jQuery.fn.delay = function( time, type ) {
 	time = jQuery.fx ? jQuery.fx.speeds[ time ] || time : time;
 	type = type || "fx";
@@ -9449,7 +9449,7 @@ function buildParams( prefix, obj, traditional, add ) {
 				add( prefix, v );
 
 			} else {
-				// Item is non-scalar (array or object), encode its numeric index.
+				// Item is non-scalar (array or object), encode its numeric indexView.
 				buildParams( prefix + "[" + ( typeof v === "object" ? i : "" ) + "]", v, traditional, add );
 			}
 		});

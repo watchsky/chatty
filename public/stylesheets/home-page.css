@@ -154,3 +154,38 @@ body {
 .content {
     height: 540px;
 }
+
+#introduction div {
+    float: left;
+}
+
+#introduction img {
+    width: 160px;
+    height: 213;
+    margin-bottom: 15px;
+}
+
+#introduction ul {
+    list-style-type: none;
+    font-size: 18px;
+}
+
+#introduction p {
+    font-size: 18px;
+    text-indent: 40px;
+}
+
+.login-panel {
+    margin-bottom: 10px;
+}
+
+#errorMessage {
+    height: 20px;
+    color: #ff0000;
+}
+
+#userNameValidationMessage, #passwordValidationMessage, #mailValidationMessage, #confirmPasswordValidationMessage {
+    padding-top: 7px;
+    padding-left: 0;
+    color: #ff0000;
+}
