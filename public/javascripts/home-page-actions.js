@@ -1,4 +1,7 @@
-var validationResult = true;
+var networkError = false;
+var usernameValidationError = false;
+var emailValidationError = false;
+var passwordConsistenceValidationError = false;
 
 $(document).ready(function () {
     $("#inputUserName").click(function () {
@@ -10,22 +13,23 @@ $(document).ready(function () {
     });
 
     $("#inputRegisterUserName").focus(function () {
+        networkError = false;
         $("#userNameValidationMessage").text("用户名由字母和数字组成，且必须由字母开头").css("color", "#0000ff");
     });
 
     $("#inputRegisterUserName").blur(function () {
         var username = $("#inputRegisterUserName").val().trim();
-        validationResult = true;
+        usernameValidationError = false;
         if (username === "") {
             $("#userNameValidationMessage").text("");
             return;
         }
 
-        var usernamePattern = new RegExp("^[A-Za-z][A-Za-z0-9]*[A-Za-z0-9]$");
+        var usernamePattern = new RegExp("^[A-Za-z][A-Za-z0-9]*$");
         var isUsernameFormatError = usernamePattern.test(username) === false;
         if (isUsernameFormatError) {
             $("#userNameValidationMessage").text("用户名的格式错误").css("color", "#ff0000");
-            validationResult = false;
+            usernameValidationError = true;
             return;
         }
 
@@ -43,17 +47,14 @@ $(document).ready(function () {
 
     $("#inputMail").blur(function () {
         var email = $("#inputMail").val().trim();
-        validationResult = true;
-        if (email === "") {
-            $("#mailValidationMessage").text("");
-            return;
-        }
-
-        var validationPattern = new RegExp("^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$");
-        var isEmailFormatError = validationPattern.test(email) === false;
-        if (isEmailFormatError) {
-            $("#mailValidationMessage").text("邮箱的格式错误");
-            validationResult = false;
+        emailValidationError = false;
+        if (email !== "") {
+            var validationPattern = new RegExp("^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$");
+            var isEmailFormatError = validationPattern.test(email) === false;
+            if (isEmailFormatError) {
+                $("#mailValidationMessage").text("邮箱的格式错误");
+                emailValidationError = true;
+            }
         }
     });
 
@@ -66,89 +67,84 @@ $(document).ready(function () {
         var password = $("#inputRegisterPassword").val();
         var confirmPassword = $("#confirmPassword").val();
 
-        validationResult = true;
-
-        if (password === "" || confirmPassword === "" || password === confirmPassword)
-            return;
-        $("#confirmPasswordValidationMessage").text("密码不一致，请重新确认密码");
-        validationResult = false;
+        passwordConsistenceValidationError = false;
+        if (password !== "" && confirmPassword !== "" && password !== confirmPassword) {
+            $("#confirmPasswordValidationMessage").text("密码不一致，请重新确认密码");
+            passwordConsistenceValidationError = true;
+        }
     });
 
 });
 
-function renderHeaderButtonStyle() {
-
-    var selector = location.pathname.split("/")[1];
-    if (selector === undefined || selector === "") {
-        return;
+function activateCurrentPage() {
+    var currentPageName = location.pathname.split("/")[1];
+    if (currentPageName !== undefined && currentPageName !== "") {
+        $(".container .header .active").removeClass("active");
+        $("#" + currentPageName).addClass("active");
     }
-    $(".container .header .active").removeClass("active");
-    $("#" + selector).addClass("active");
 }
 
-function hideElementAfterMs(selector, ms) {
+function emptyElementAfterMs(selector, ms) {
     setTimeout(function () {
-        $(selector).html("");
+        $(selector).empty();
     }, ms);
 }
 
 function userExists(username) {
     var response = $.ajax({url: "/validateRegisterData", async: false, type: "POST", dataType: "json",
         data: "inputRegisterUserName=" + username});
-    if (response.status != 200) {
+
+    usernameValidationError = true;
+    networkError = false;
+
+    if (response.status !== 200) {
+        networkError = true;
         $("#errorMessage").text("网络出错，请稍后再试");
-        hideElementAfterMs("#errorMessage", 2000);
-        validationResult = false;
+        emptyElementAfterMs("#errorMessage", 2000);
         return false;
-    }
-    if (response.responseJSON.validationResult === false) {
-        validationResult = false;
+    } else if (response.responseJSON.validationResult === false) {
         return true;
     }
+    usernameValidationError = false;
     return false;
 }
 
 function validateLoginData() {
     var username = $("#inputUserName").val().trim();
     var password = $("#inputPassword").val();
-    var usernamePattern = new RegExp("^[A-Za-z][A-Za-z0-9]*[A-Za-z0-9]$");
+    var usernamePattern = new RegExp("^[A-Za-z][A-Za-z0-9]*$");
 
     if (username === "") {
         $("#userNameValidationMessage").text("用户名不能为空");
-        hideElementAfterMs("#userNameValidationMessage", 1500);
+        emptyElementAfterMs("#userNameValidationMessage", 1500);
         $("#inputUserName").focus();
         return false;
-    }
-    if (password === "") {
+    } else if (password === "") {
         $("#passwordValidationMessage").text("密码不能为空");
-        hideElementAfterMs("#passwordValidationMessage", 1500);
+        emptyElementAfterMs("#passwordValidationMessage", 1500);
         $("#inputPassword").focus();
         return false;
-    }
-    if (usernamePattern.test(username) === false) {
+    } else if (usernamePattern.test(username) === false) {
         $("#errorMessage").text("用户名的格式错误");
         return false;
     }
+
     var response = $.ajax({url: "/validateLoginData", async: false, type: "POST", dataType: "json",
         data: "inputUserName=" + username + "&inputPassword=" + password});
     if (response.status != 200) {
         $("#errorMessage").text("网络出错，请稍后再试");
-        hideElementAfterMs("#errorMessage", 2000);
+        emptyElementAfterMs("#errorMessage", 2000);
         return false;
-    }
-    if (response.responseJSON.validationResult === false) {
+    } else if (response.responseJSON.validationResult === false) {
         $("#errorMessage").text("用户名或密码错误");
         return false;
+    } else {
+        $("#inputUserName").val(username);
+        return true;
     }
-
-    $("#inputUserName").val(username);
-    return true;
 }
 
 function validateRegisterData() {
-    if (validationResult === false)
-        return false;
-
     var username = $("#inputRegisterUserName").val().trim();
     var email = $("#inputMail").val().trim();
     var password = $("#inputRegisterPassword").val();
@@ -157,20 +153,84 @@ function validateRegisterData() {
     if (username === "") {
         $("#userNameValidationMessage").text("用户名不能为空").css("color", "#ff0000");
         return false;
-    }
-    if (email === "") {
+    } else if (email === "") {
         $("#mailValidationMessage").text("邮箱不能为空");
         return false;
-    }
-    if (password === "") {
+    } else if (password === "") {
         $("#passwordValidationMessage").text("密码不能为空");
         return false;
-    }
-    if (confirmPassword === "") {
+    } else if (confirmPassword === "") {
         $("#confirmPasswordValidationMessage").text("确认密码不能为空");
+        return false;
+    }
+
+    if (emailValidationError || passwordConsistenceValidationError) {
+        return false;
+    } else if (networkError) {
+        //check network again
+        if (userExists(username)) {
+            $("#userNameValidationMessage").text("该用户名已经被使用，请换其他用户名").css("color", "#ff0000");
+            return false;
+        } else if (usernameValidationError) {
+            return false;
+        }
+    } else if (usernameValidationError) {
         return false;
     }
     $("#inputRegisterUserName").val(username);
     $("#inputMail").val(email);
     return true;
+}
+
+function validateRoom() {
+    var roomName = $("#roomName").val().trim();
+    if (roomName === "") {
+        window.alert("房间名不能为空，请重新输入。");
+        $("#roomName").focus();
+        return false;
+    }
+
+    var roomPattern = new RegExp("^[A-Za-z0-9]+$");
+    var isRoomNameFormatError = roomPattern.test(roomName) === false;
+    if (isRoomNameFormatError) {
+        window.alert("房间名的格式错误，必须由字母、数字组成，请重新输入。");
+        $("#roomName").focus();
+        return false;
+    }
+
+    var response = $.ajax({url: "/validateRoom", async: false, type: "POST", dataType: "json",
+        data: "roomName=" + roomName});
+    if (response.status != 200) {
+        window.alert("网络出错，请稍后再试。");
+        $("#roomName").focus();
+        return false;
+    } else if (response.responseJSON.isRoomExistent && response.responseJSON.isRoomFull) {
+        window.alert("该房间的人数已满，请换其他的房间。");
+        $("#roomName").focus();
+        return false;
+    } else if (response.responseJSON.isRoomExistent && response.responseJSON.isPasswordNecessary) {
+        var password = window.prompt("该房间已经有人，如果您想加入，请输入密码。\n房间密码:","");
+        if (password === null || password === "") {
+            return false;
+        }
+        var response = $.ajax({url: "/validateRoomPassword", async: false, type: "POST", dataType: "json",
+            data: "roomName=" + roomName + "&password=" + password});
+        if (response.status != 200) {
+            window.alert("网络出错，请稍后再试。");
+            $("#roomName").focus();
+            return false;
+        } else if (response.responseJSON.validationResult === false) {
+            window.alert("密码错误，请重试。");
+            $("#roomName").focus();
+            return false;
+        } else {
+            $("#roomName").val(roomName);
+            return true;
+        }
+    } else if (response.responseJSON.isRoomExistent && !response.responseJSON.isPasswordNecessary) {
+        return window.confirm("该房间已经有人，您想要加入么？");
+    } else {
+        $("#roomName").val(roomName);
+        return true;
+    }
 }

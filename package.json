@@ -14,6 +14,15 @@
     "debug": "~0.7.4",
     "ejs": "~0.8.5",
     "express-partials": "*",
-    "mongodb": "1.4.9"
+    "mongodb": "1.4.9",
+    "session-mongoose": "0.5.2",
+    "express-session": "1.8.0",
+    "webrtcsupport": "^1.0.0",
+    "wildemitter": "1.x",
+    "attachmediastream": "1.0.1",
+    "webrtc": "1.11.x",
+    "mockconsole": "0.0.1",
+    "socket.io-client": "0.9.16",
+    "socket.io": "0.9.16"
   }
 }
