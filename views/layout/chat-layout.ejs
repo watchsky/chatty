@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="#">
+
+    <title>Chatty</title>
+
+    <link href="/assets/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/stylesheets/menu.css" rel="stylesheet"/>
+    <script src="/assets/js/jquery-1.11.1.min.js"></script>
+    <script>
+        var _roomName = '<%= subTemplate.roomName %>';
+        var _roomPassword = '<%= subTemplate.roomPassword %>';
+        var _username = '<%= username %>';
+        var _isAnonymous = '<%= isAnonymous %>';
+    </script>
+    <script src="/javascripts/chat-layout.js"></script>
+</head>
+
+<body>
+    <div>
+        <%- partial("chat-menu", subTemplate) %>
+    </div>
+    <div>
+        <%- partial("chat-panel", {})%>
+    </div>
+</body>
+</html>

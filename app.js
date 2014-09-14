@@ -38,7 +38,7 @@ app.post('/register', homePageRoutes.register);
 
 app.post('/validateRoom', homePageRoutes.validateRoom);
 app.post('/validateRoomPassword', homePageRoutes.validateRoomPassword);
-app.get('/joinRoom', homePageRoutes.joinRoom);
+app.post('/joinRoom', homePageRoutes.joinRoom);
 
 /// catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -22,11 +22,11 @@ function handle(handler, data, callback) {
         } else {
             db.authenticate(dbSettings.username, dbSettings.password, function (err, result) {
                 if (err !== null) {
+                    db.close();
                     callback(err);
-                    db.close();
                 } else if (result !== true) {
-                    callback("authentication error");
                     db.close();
+                    callback("authentication error");
                 } else {
                     handler(db, data, callback);
                 }
@@ -37,14 +37,14 @@ function handle(handler, data, callback) {
 
 function findOneHandler(db, query, callback) {
     db.collection(userInfos.tableName).findOne(query, function (err, document) {
-        callback(err, document);
         db.close();
+        callback(err, document);
     });
 }
 
 function insertHandler(db, document, callback) {
     db.collection(userInfos.tableName).insert(document, {w: 1}, function (err, doc) {
-        callback(err, doc);
         db.close();
+        callback(err, doc);
     });
 }
