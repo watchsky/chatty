@@ -5,6 +5,7 @@ $(document).ready(function () {
 
     $("#menu_pause").click(function (event) {
         event.preventDefault();
+        webrtcClient.pauseVideo();
     });
 
     $("#menu_set_password").click(function (event) {

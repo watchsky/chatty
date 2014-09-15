@@ -1,7 +1,7 @@
 var db = require("./db");
 var dbSettings = require("./db-settings");
 
-rooms = {};
+var rooms = {};
 
 module.exports = rooms;
 
@@ -32,10 +32,10 @@ rooms.addUserToRoom = function (roomName, username, isAnonymous, callback) {
             callback(err);
         } else {
             doc.users.push({name: username, isAnonymous: isAnonymous});
-            var data = {criteria: {name: roomName}, update: {accumulativeUserNumber: doc.accumulativeUserNumber+1, users: doc.users}};
+            var data = {criteria: {name: roomName}, update: {accumulativeUserNumber: doc.accumulativeUserNumber + 1, users: doc.users}};
             handle(updateHandler, data, callback);
         }
-    })
+    });
 };
 
 rooms.deleteUserFromRoom = function (roomName, username, callback) {
@@ -52,7 +52,7 @@ rooms.deleteUserFromRoom = function (roomName, username, callback) {
             var data = {criteria: {name: roomName}, update: {users: doc.users}};
             handle(updateHandler, data, callback);
         }
-    })
+    });
 };
 
 function handle(handler, data, callback) {

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "prepare": "node ./bin/build.js",
     "start": "node ./bin/www"
   },
   "dependencies": {
@@ -24,5 +25,8 @@
     "mockconsole": "0.0.1",
     "socket.io-client": "0.9.16",
     "socket.io": "0.9.16"
+  },
+  "devDependencies": {
+    "browserify": "2.22.0"
   }
 }

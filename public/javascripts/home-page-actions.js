@@ -209,11 +209,11 @@ function validateRoom() {
         $("#roomName").focus();
         return false;
     } else if (response.responseJSON.isRoomExistent && response.responseJSON.isPasswordNecessary) {
-        var password = window.prompt("该房间已经有人，如果您想加入，请输入密码。\n房间密码:","");
+        var password = window.prompt("该房间已经有人，如果您想加入，请输入密码。\n房间密码:", "");
         if (password === null || password === "") {
             return false;
         }
-        var response = $.ajax({url: "/validateRoomPassword", async: false, type: "POST", dataType: "json",
+        response = $.ajax({url: "/validateRoomPassword", async: false, type: "POST", dataType: "json",
             data: "roomName=" + roomName + "&password=" + password});
         if (response.status != 200) {
             window.alert("网络出错，请稍后再试。");

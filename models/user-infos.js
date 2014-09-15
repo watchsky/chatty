@@ -1,7 +1,7 @@
 var db = require("./db");
 var dbSettings = require("./db-settings");
 
-userInfos = {};
+var userInfos = {};
 
 module.exports = userInfos;
 

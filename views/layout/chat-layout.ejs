@@ -12,14 +12,19 @@
 
     <link href="/assets/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="/stylesheets/menu.css" rel="stylesheet"/>
-    <script src="/assets/js/jquery-1.11.1.min.js"></script>
+    <link href="/stylesheets/chat-panel.css" rel="stylesheet"/>
+
     <script>
         var _roomName = '<%= subTemplate.roomName %>';
         var _roomPassword = '<%= subTemplate.roomPassword %>';
         var _username = '<%= username %>';
         var _isAnonymous = '<%= isAnonymous %>';
     </script>
+    <script src="/assets/js/jquery-1.11.1.min.js"></script>
+    <script src="/assets/js/socket.io.min.js"></script>
     <script src="/javascripts/chat-layout.js"></script>
+    <script src="/javascripts/webrtc-client.bundle.js"></script>
+    <script src="/javascripts/chat-panel.js"></script>
 </head>
 
 <body>

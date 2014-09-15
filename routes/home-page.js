@@ -150,18 +150,19 @@ exports.joinRoom = function (req, res) {
                 console.error(err);
                 res.send(500, {});
             } else {
+                var username;
                 if (document === null) {
-                    var username = "_anonymousUser1";
+                    username = "_anonymousUser1";
                     var newRoomRecord = {name: roomName, password: "", accumulativeUserNumber: 1,
                         users: [{name: username, isAnonymous: true}]};
                     rooms.insert(newRoomRecord, function (err, doc) {
                         joinRoomCallback(err, res, roomName, "", username, true);
-                    })
+                    });
                 } else {
-                    var username = "_anonymousUser" + (document.accumulativeUserNumber + 1);
+                    username = "_anonymousUser" + (document.accumulativeUserNumber + 1);
                     rooms.addUserToRoom(roomName, username, true, function (err) {
                         joinRoomCallback(err, res, roomName, document.password, username, true);
-                    })
+                    });
                 }
             }
         });

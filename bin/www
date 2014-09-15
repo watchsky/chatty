@@ -1,9 +1,16 @@
 #!/usr/bin/env node
+var http = require('http');
 var debug = require('debug')('chatty');
 var app = require('../app');
+var WebRTCServer = require('../models/webrtc-server.js');
 
 app.set('port', process.env.PORT || 3000);
 
-var server = app.listen(app.get('port'), function() {
-  debug('Express server listening on port ' + server.address().port);
+var httpServer = http.createServer(app).listen(app.get('port'), function() {
+    debug('Chatty server listening on port ' + app.get('port'));
 });
+
+var webrtcServer = new WebRTCServer();
+webrtcServer.listen(httpServer);
+
+
