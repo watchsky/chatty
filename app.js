@@ -28,7 +28,6 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', homePageRouter.indexView);
-app.get('/index', homePageRouter.indexView);
 app.get('/about', homePageRouter.aboutView);
 app.get('/login', homePageRouter.loginView);
 app.get('/register', homePageRouter.registerView);

@@ -74,37 +74,4 @@ $(document).ready(function () {
         window.location.assign("http://127.0.0.1:3000/");
     });
 
-    _webrtcClient.on("handleBusinessMessage", function (message) {
-        if (message.subType === subType.newRoomPassword) {
-            _roomPassword = message.payload.newRoomPassword;
-            if (_roomPassword === "") {
-                hideRoomPassword();
-            } else {
-                showRoomPassword(_roomPassword);
-            }
-        }
-    });
-
 });
-
-var subType = {
-    "newRoomPassword": "newRoomPassword",
-    "quit": "quit"
-};
-
-function notifyOthersNewRoomPassword(password) {
-    var payload = {roomName: _roomName, type: "business", subType: subType.newRoomPassword, from: _username, to: "_all",
-        payload: {newRoomPassword: password}};
-    _webrtcClient.connection.emit('message', payload);
-}
-
-function hideRoomPassword() {
-    $("#room_password").hide();
-    $("#menu_set_password").html("设置密码");
-}
-
-function showRoomPassword(password) {
-    $("#room_password span").html(password);
-    $("#room_password").show();
-    $("#menu_set_password").html("取消密码");
-}

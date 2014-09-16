@@ -1,4 +1,8 @@
 var _webrtcClient = null;
+var _subType = {
+    "newRoomPassword": "newRoomPassword",
+    "quit": "quit"
+};
 
 $(document).ready(function () {
     _webrtcClient = new WebRTCClient({
@@ -31,6 +35,7 @@ $(document).ready(function () {
             remotes.appendChild(d);
         }
     });
+
     _webrtcClient.on('videoRemoved', function (video, peer) {
         console.log('video removed ', peer);
         var remotes = document.getElementById('remotes');
@@ -39,4 +44,33 @@ $(document).ready(function () {
             remotes.removeChild(el);
         }
     });
+
+    _webrtcClient.on("handleBusinessMessage", function (message) {
+        if (message.subType === _subType.newRoomPassword) {
+            _roomPassword = message.payload.newRoomPassword;
+            if (_roomPassword === "") {
+                hideRoomPassword();
+            } else {
+                showRoomPassword(_roomPassword);
+            }
+        }
+    });
 });
+
+function notifyOthersNewRoomPassword(password) {
+    var payload = {roomName: _roomName, type: "business", subType: _subType.newRoomPassword, from: _username, to: "_all",
+        payload: {newRoomPassword: password}};
+    _webrtcClient.connection.emit('message', payload);
+}
+
+function hideRoomPassword() {
+    $("#room_password").hide();
+    $("#menu_set_password").html("设置密码");
+}
+
+function showRoomPassword(password) {
+    $("#room_password span").html(password);
+    $("#room_password").show();
+    $("#menu_set_password").html("取消密码");
+}
+
