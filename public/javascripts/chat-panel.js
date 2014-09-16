@@ -1,7 +1,7 @@
-var webrtcClient = null;
+var _webrtcClient = null;
 
 $(document).ready(function () {
-    webrtcClient = new WebRTCClient({
+    _webrtcClient = new WebRTCClient({
         localVideoEl: 'localVideo',
         remoteVideosEl: '',
         autoRequestMedia: true,
@@ -12,13 +12,13 @@ $(document).ready(function () {
         username: _username
     });
 
-    webrtcClient.on('videoAdded', function (video, peer) {
+    _webrtcClient.on('videoAdded', function (video, peer) {
         console.log('video added', peer);
         var remotes = document.getElementById('remotes');
         if (remotes) {
             var d = document.createElement('div');
             d.className = 'videoContainer';
-            d.id = 'container_' + webrtcClient.getDomId(peer);
+            d.id = 'container_' + _webrtcClient.getDomId(peer);
             d.appendChild(video);
             var vol = document.createElement('div');
             vol.id = 'volume_' + peer.id;
@@ -31,10 +31,10 @@ $(document).ready(function () {
             remotes.appendChild(d);
         }
     });
-    webrtcClient.on('videoRemoved', function (video, peer) {
+    _webrtcClient.on('videoRemoved', function (video, peer) {
         console.log('video removed ', peer);
         var remotes = document.getElementById('remotes');
-        var el = document.getElementById('container_' + webrtcClient.getDomId(peer));
+        var el = document.getElementById('container_' + _webrtcClient.getDomId(peer));
         if (remotes && el) {
             remotes.removeChild(el);
         }

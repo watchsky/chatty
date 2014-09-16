@@ -4,6 +4,8 @@ var emailValidationError = false;
 var passwordConsistenceValidationError = false;
 
 $(document).ready(function () {
+    activateCurrentPage();
+
     $("#inputUserName").click(function () {
         $("#errorMessage").text("");
     });
@@ -210,7 +212,12 @@ function validateRoom() {
         return false;
     } else if (response.responseJSON.isRoomExistent && response.responseJSON.isPasswordNecessary) {
         var password = window.prompt("该房间已经有人，如果您想加入，请输入密码。\n房间密码:", "");
-        if (password === null || password === "") {
+        if (password === null) {
+            return false;
+        }
+        if (password === "") {
+            window.alert("密码错误，请重试。");
+            $("#roomName").focus();
             return false;
         }
         response = $.ajax({url: "/validateRoomPassword", async: false, type: "POST", dataType: "json",

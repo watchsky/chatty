@@ -9,6 +9,8 @@ var io = require('socket.io-client');
 function WebRTCClient(opts) {
     this.roomName = opts.roomName;
     this.username = opts.username;
+    this.isMute = false;
+    this.isPaused = false;
 
     var self = this;
     var options = opts || {};
@@ -73,9 +75,13 @@ function WebRTCClient(opts) {
         self.testReadiness();
     });
     connection.on('message', function (message) {
+        if (message.type === 'business') {
+            self.emit("handleBusinessMessage", message);
+            return;
+        }
+
         var peers = self.webrtc.getPeers(message.from, message.roomType);
         var peer;
-
         if (message.type === 'offer') {
             if (peers.length) {
                 peer = peers[0];
@@ -99,6 +105,14 @@ function WebRTCClient(opts) {
         if (room.id !== self.connection.socket.sessionid) {
             self.webrtc.removePeers(room.id, room.type);
         }
+    });
+
+    connection.on('userLeavesRoom', function (username) {
+        self.webrtc.peers.forEach(function (peer) {
+            if (peer.id === username) {
+                peer.end();
+            }
+        });
     });
 
     // instantiate our main WebRTC helper
@@ -226,7 +240,7 @@ WebRTCClient.prototype = Object.create(WildEmitter.prototype, {
 
 WebRTCClient.prototype.leaveRoom = function () {
     if (this.roomName) {
-        this.connection.emit('leave');
+        this.connection.emit('leave', this.roomName, this.username);
         this.webrtc.peers.forEach(function (peer) {
             peer.end();
         });
@@ -241,6 +255,12 @@ WebRTCClient.prototype.leaveRoom = function () {
 WebRTCClient.prototype.disconnect = function () {
     this.connection.disconnect();
     delete this.connection;
+};
+
+WebRTCClient.prototype.quitVideo = function () {
+    this.leaveRoom();
+    this.disconnect();
+    this.stopLocalVideo();
 };
 
 WebRTCClient.prototype.handlePeerStreamAdded = function (peer) {

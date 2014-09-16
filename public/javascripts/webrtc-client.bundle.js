@@ -11,6 +11,8 @@ var io = require('socket.io-client');
 function WebRTCClient(opts) {
     this.roomName = opts.roomName;
     this.username = opts.username;
+    this.isMute = false;
+    this.isPaused = false;
 
     var self = this;
     var options = opts || {};
@@ -75,9 +77,13 @@ function WebRTCClient(opts) {
         self.testReadiness();
     });
     connection.on('message', function (message) {
+        if (message.type === 'business') {
+            self.emit("handleBusinessMessage", message);
+            return;
+        }
+
         var peers = self.webrtc.getPeers(message.from, message.roomType);
         var peer;
-
         if (message.type === 'offer') {
             if (peers.length) {
                 peer = peers[0];
@@ -101,6 +107,14 @@ function WebRTCClient(opts) {
         if (room.id !== self.connection.socket.sessionid) {
             self.webrtc.removePeers(room.id, room.type);
         }
+    });
+
+    connection.on('userLeavesRoom', function (username) {
+        self.webrtc.peers.forEach(function (peer) {
+            if (peer.id === username) {
+                peer.end();
+            }
+        });
     });
 
     // instantiate our main WebRTC helper
@@ -228,7 +242,7 @@ WebRTCClient.prototype = Object.create(WildEmitter.prototype, {
 
 WebRTCClient.prototype.leaveRoom = function () {
     if (this.roomName) {
-        this.connection.emit('leave');
+        this.connection.emit('leave', this.roomName, this.username);
         this.webrtc.peers.forEach(function (peer) {
             peer.end();
         });
@@ -243,6 +257,12 @@ WebRTCClient.prototype.leaveRoom = function () {
 WebRTCClient.prototype.disconnect = function () {
     this.connection.disconnect();
     delete this.connection;
+};
+
+WebRTCClient.prototype.quitVideo = function () {
+    this.leaveRoom();
+    this.disconnect();
+    this.stopLocalVideo();
 };
 
 WebRTCClient.prototype.handlePeerStreamAdded = function (peer) {
@@ -609,18 +629,6 @@ module.exports = {
     MediaStream: MediaStream
 };
 
-},{}],6:[function(require,module,exports){
-var methods = "assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(",");
-var l = methods.length;
-var fn = function () {};
-var mockconsole = {};
-
-while (l--) {
-    mockconsole[methods[l]] = fn;
-}
-
-module.exports = mockconsole;
-
 },{}],5:[function(require,module,exports){
 module.exports = function (stream, el, options) {
     var URL = window.URL;
@@ -661,6 +669,18 @@ module.exports = function (stream, el, options) {
 
     return element;
 };
+
+},{}],6:[function(require,module,exports){
+var methods = "assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(",");
+var l = methods.length;
+var fn = function () {};
+var mockconsole = {};
+
+while (l--) {
+    mockconsole[methods[l]] = fn;
+}
+
+module.exports = mockconsole;
 
 },{}],7:[function(require,module,exports){
 /*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */

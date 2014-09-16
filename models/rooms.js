@@ -55,6 +55,10 @@ rooms.deleteUserFromRoom = function (roomName, username, callback) {
     });
 };
 
+rooms.deleteRoom = function (roomName, callback) {
+    handle(deleteRoomHandler, {name: roomName}, callback);
+};
+
 function handle(handler, data, callback) {
     db.open(function (err, db) {
         if (err !== null) {
@@ -91,6 +95,13 @@ function insertHandler(db, document, callback) {
 
 function updateHandler(db, data, callback) {
     db.collection(rooms.tableName).update(data.criteria, {$set: data.update}, {}, function (err) {
+        db.close();
+        callback(err);
+    });
+}
+
+function deleteRoomHandler(db, query, callback) {
+    db.collection(rooms.tableName).remove(query, {}, function (err) {
         db.close();
         callback(err);
     });

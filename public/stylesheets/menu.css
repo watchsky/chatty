@@ -24,12 +24,6 @@ body, ul, li {
     border: none;
 }
 
-#menu li.text:hover {
-    border: none;
-    padding: 11px 0px 11px 0px;
-    background: #f5f5f5;
-}
-
 #menu li a {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 14px;
@@ -186,7 +180,11 @@ body, ul, li {
 }
 
 #icon_link img {
-    width: 21px;
-    height: 21px;
+    width: 43px;
+    height: 43px;
+}
+
+#menu li:first-child {
+    padding: 0;
 }
 

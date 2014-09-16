@@ -1,5 +1,6 @@
 var socketIO = require('socket.io');
 var Room = require('./room.js');
+var rooms = require("./rooms.js");
 
 function WebRTCServer() {
     this.rooms = [];
@@ -16,11 +17,19 @@ WebRTCServer.prototype.listen = function (httpServer) {
             var room = self.getRoom(payload.roomName);
             if (room === null)
                 return;
-
-            var user = room.getUser(payload.to);
-            if (user === null)
-                return;
-            user.socket.emit("message", payload);
+            if (payload.to === "_all") {
+                var users = room.getUsers();
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].username === payload.from)
+                        continue;
+                    users[i].socket.emit("message", payload);
+                }
+            } else {
+                var user = room.getUser(payload.to);
+                if (user === null)
+                    return;
+                user.socket.emit("message", payload);
+            }
         });
 
         socket.on('join', function (roomName, username, callback) {
@@ -42,6 +51,36 @@ WebRTCServer.prototype.listen = function (httpServer) {
             }
 
             callback(null, roomDes);
+        });
+
+        socket.on('leave', function (roomName, username) {
+            var room = self.getRoom(roomName);
+            if (room === null)
+                return;
+
+            var users = room.getUsers();
+            var index;
+            for (index = 0; index < users.length; index++) {
+                if (users[index].username === username)
+                    break;
+            }
+            users.splice(index, 1);
+            if (users.length === 0) {
+                rooms.deleteRoom(roomName, function (err) {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
+            } else {
+                rooms.deleteUserFromRoom(roomName, username, function (err) {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
+                for (var i = 0; i < users.length; i++) {
+                    users[i].socket.emit("userLeavesRoom", username);
+                }
+            }
         });
 
     });

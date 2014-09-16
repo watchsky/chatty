@@ -7,7 +7,8 @@ var bodyParser = require('body-parser');
 var partials = require('express-partials');
 var session = require('express-session');
 
-var homePageRoutes = require('./routes/home-page');
+var homePageRouter = require('./routes/home-page-router.js');
+var chatPageRouter = require('./routes/chat-page-router.js');
 
 var app = express();
 
@@ -26,19 +27,21 @@ app.use(session({
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', homePageRoutes.indexView);
-app.get('/index', homePageRoutes.indexView);
-app.get('/about', homePageRoutes.aboutView);
-app.get('/login', homePageRoutes.loginView);
-app.get('/register', homePageRoutes.registerView);
-app.post('/validateLoginData', homePageRoutes.validateLoginData);
-app.post('/login', homePageRoutes.login);
-app.post('/validateRegisterData', homePageRoutes.validateRegisterData);
-app.post('/register', homePageRoutes.register);
+app.get('/', homePageRouter.indexView);
+app.get('/index', homePageRouter.indexView);
+app.get('/about', homePageRouter.aboutView);
+app.get('/login', homePageRouter.loginView);
+app.get('/register', homePageRouter.registerView);
+app.post('/validateLoginData', homePageRouter.validateLoginData);
+app.post('/login', homePageRouter.login);
+app.post('/validateRegisterData', homePageRouter.validateRegisterData);
+app.post('/register', homePageRouter.register);
 
-app.post('/validateRoom', homePageRoutes.validateRoom);
-app.post('/validateRoomPassword', homePageRoutes.validateRoomPassword);
-app.post('/joinRoom', homePageRoutes.joinRoom);
+app.post('/validateRoom', homePageRouter.validateRoom);
+app.post('/validateRoomPassword', homePageRouter.validateRoomPassword);
+app.post('/joinRoom', homePageRouter.joinRoom);
+
+app.post('/setRoomPassword', chatPageRouter.setRoomPassword);
 
 /// catch 404 and forward to error handler
 app.use(function (req, res, next) {
