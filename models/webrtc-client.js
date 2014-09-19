@@ -6,9 +6,9 @@ var mockconsole = require('mockconsole');
 var io = require('socket.io-client');
 
 
-function WebRTCClient(opts) {
-    this.roomName = opts.roomName;
-    this.username = opts.username;
+function WebRTCClient(opts, roomName, username) {
+    this.roomName = roomName;
+    this.username = username;
     this.isMute = false;
     this.isPaused = false;
 
@@ -186,7 +186,9 @@ function WebRTCClient(opts) {
             el = document.createElement('video'),
             container = self.getRemoteVideoContainer();
 
-        el.oncontextmenu = function () { return false; };
+        el.oncontextmenu = function () {
+            return false;
+        };
         el.id = 'localScreen';
         attachMediaStream(stream, el);
         if (container) {
@@ -375,11 +377,15 @@ WebRTCClient.prototype.stopLocalVideo = function () {
 WebRTCClient.prototype.getLocalVideoContainer = function () {
     var el = this.getEl(this.config.localVideoEl);
     if (el && el.tagName === 'VIDEO') {
-        el.oncontextmenu = function () { return false; };
+        el.oncontextmenu = function () {
+            return false;
+        };
         return el;
     } else if (el) {
         var video = document.createElement('video');
-        video.oncontextmenu = function () { return false; };
+        video.oncontextmenu = function () {
+            return false;
+        };
         el.appendChild(video);
         return video;
     } else {

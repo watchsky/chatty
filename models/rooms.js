@@ -59,6 +59,11 @@ rooms.deleteRoom = function (roomName, callback) {
     handle(deleteRoomHandler, {name: roomName}, callback);
 };
 
+rooms.searchAUser = function (roomName, username, callback) {
+    var query = {name: roomName, "users.name": username};
+    this.findOne(query, callback);
+};
+
 function handle(handler, data, callback) {
     db.open(function (err, db) {
         if (err !== null) {

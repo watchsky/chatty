@@ -5,6 +5,22 @@ var _subType = {
 };
 
 $(document).ready(function () {
+    var response = $.ajax({url: "/getIceServerAccountInfo", async: false, type: "POST", dataType: "json",
+        data: "roomName=" + _roomName + "&username=" + _username});
+    if (response.status != 200 || response.responseJSON.iceServerAccountInfo === null) {
+        window.alert("创建房间失败，请重试。");
+        window.location.assign(window.location.protocol + "//" + window.location.host);
+        return;
+    }
+
+    var peerConnectionConfig;
+    $.ajax({type: "POST", dataType: "json", url: "https://api.xirsys.com/getIceServers", data: response.responseJSON.iceServerAccountInfo,
+        success: function (data, status) {
+            peerConnectionConfig = data.d;
+        },
+        async: false
+    });
+
     _webrtcClient = new WebRTCClient({
         localVideoEl: 'localVideo',
         remoteVideosEl: '',
@@ -12,9 +28,8 @@ $(document).ready(function () {
         debug: false,
         detectSpeakingEvents: true,
         autoAdjustMic: false,
-        roomName: _roomName,
-        username: _username
-    });
+        peerConnectionConfig: peerConnectionConfig
+    }, _roomName, _username);
 
     _webrtcClient.on('videoAdded', function (video, peer) {
         console.log('video added', peer);

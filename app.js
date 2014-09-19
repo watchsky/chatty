@@ -9,6 +9,7 @@ var session = require('express-session');
 
 var homePageRouter = require('./routes/home-page-router.js');
 var chatPageRouter = require('./routes/chat-page-router.js');
+var iceServerAccountService = require('./routes/ice-server-account-service.js');
 
 var app = express();
 
@@ -41,6 +42,7 @@ app.post('/validateRoomPassword', homePageRouter.validateRoomPassword);
 app.post('/joinRoom', homePageRouter.joinRoom);
 
 app.post('/setRoomPassword', chatPageRouter.setRoomPassword);
+app.post('/getIceServerAccountInfo', iceServerAccountService.getIceServerAccountInfo);
 
 /// catch 404 and forward to error handler
 app.use(function (req, res, next) {
