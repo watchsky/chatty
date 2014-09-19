@@ -71,7 +71,7 @@ $(document).ready(function () {
     $("#menu_quit_video").click(function (event) {
         event.preventDefault();
         _webrtcClient.quitVideo();
-        window.location.assign("http://127.0.0.1:3000/");
+        window.location.assign(window.location.protocol + "//" + window.location.host);
     });
 
 });

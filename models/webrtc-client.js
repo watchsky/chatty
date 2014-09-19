@@ -15,7 +15,7 @@ function WebRTCClient(opts) {
     var self = this;
     var options = opts || {};
     var config = this.config = {
-        url: 'http://127.0.0.1:3000',
+        url: window.location.protocol + "//" + window.location.host,
         socketio: {/* 'force new connection':true*/},
         debug: false,
         localVideoEl: '',
