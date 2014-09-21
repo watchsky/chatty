@@ -24,7 +24,8 @@
     "webrtc": "1.11.x",
     "mockconsole": "0.0.1",
     "socket.io-client": "0.9.16",
-    "socket.io": "0.9.16"
+    "socket.io": "0.9.16",
+    "jsonwebtoken": "1.1.2"
   },
   "devDependencies": {
     "browserify": "2.22.0"

@@ -1,0 +1,32 @@
+<h3 class="login-panel">用户注册</h3>
+<p class="success-registration-prompt-info">注册成功。该页面将在<span id="countdown_second"></span>秒后自动跳转到首页或者<a id="direct_login" href="#">直接登录</a>。</p>
+<script type="text/javascript">
+    var countdownSecond = 6;
+    var t;
+    function countdown() {
+        $("#countdown_second").html(countdownSecond);
+        countdownSecond--;
+        if (countdownSecond === -1) {
+            window.location.assign(window.location.protocol + "//" + window.location.host);
+            return;
+        }
+        t = setTimeout("countdown()", 1000);
+    }
+
+    $(document).ready(function () {
+        countdown();
+
+        $("#direct_login").click(function (event) {
+            clearTimeout(t);
+            event.preventDefault();
+            $.ajax({url: "/loginWithToken", type: "POST", dataType: "json", data: "token=" + "<%= token %>",
+                success: function (data, status) {
+                    if (status === "success" && data.successLogin === true) {
+                        window.location.assign(window.location.protocol + "//" + window.location.host + "/myInformation");
+                    } else {
+                        window.location.assign(window.location.protocol + "//" + window.location.host);
+                    }
+                }});
+        });
+    });
+</script>

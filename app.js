@@ -32,8 +32,11 @@ app.get('/', homePageRouter.indexView);
 app.get('/about', homePageRouter.aboutView);
 app.get('/login', homePageRouter.loginView);
 app.get('/register', homePageRouter.registerView);
+app.get('/myInformation', homePageRouter.myInformation);
+app.get('/quit', homePageRouter.quit);
 app.post('/validateLoginData', homePageRouter.validateLoginData);
 app.post('/login', homePageRouter.login);
+app.post('/loginWithToken', homePageRouter.loginWithToken);
 app.post('/validateRegisterData', homePageRouter.validateRegisterData);
 app.post('/register', homePageRouter.register);
 

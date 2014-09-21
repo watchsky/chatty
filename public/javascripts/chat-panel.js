@@ -5,21 +5,21 @@ var _subType = {
 };
 
 $(document).ready(function () {
-    var response = $.ajax({url: "/getIceServerAccountInfo", async: false, type: "POST", dataType: "json",
-        data: "roomName=" + _roomName + "&username=" + _username});
-    if (response.status != 200 || response.responseJSON.iceServerAccountInfo === null) {
-        window.alert("创建房间失败，请重试。");
-        window.location.assign(window.location.protocol + "//" + window.location.host);
-        return;
-    }
-
-    var peerConnectionConfig;
-    $.ajax({type: "POST", dataType: "json", url: "https://api.xirsys.com/getIceServers", data: response.responseJSON.iceServerAccountInfo,
-        success: function (data, status) {
-            peerConnectionConfig = data.d;
-        },
-        async: false
-    });
+//    var response = $.ajax({url: "/getIceServerAccountInfo", async: false, type: "POST", dataType: "json",
+//        data: "roomName=" + _roomName + "&username=" + _username});
+//    if (response.status != 200 || response.responseJSON.iceServerAccountInfo === null) {
+//        window.alert("创建房间失败，请重试。");
+//        window.location.assign(window.location.protocol + "//" + window.location.host);
+//        return;
+//    }
+//
+//    var peerConnectionConfig;
+//    $.ajax({type: "POST", dataType: "json", url: "https://api.xirsys.com/getIceServers", data: response.responseJSON.iceServerAccountInfo,
+//        success: function (data, status) {
+//            peerConnectionConfig = data.d;
+//        },
+//        async: false
+//    });
 
     _webrtcClient = new WebRTCClient({
         localVideoEl: 'localVideo',
@@ -27,8 +27,8 @@ $(document).ready(function () {
         autoRequestMedia: true,
         debug: false,
         detectSpeakingEvents: true,
-        autoAdjustMic: false,
-        peerConnectionConfig: peerConnectionConfig
+        autoAdjustMic: false
+//        peerConnectionConfig: peerConnectionConfig
     }, _roomName, _username);
 
     _webrtcClient.on('videoAdded', function (video, peer) {
@@ -39,15 +39,11 @@ $(document).ready(function () {
             d.className = 'videoContainer';
             d.id = 'container_' + _webrtcClient.getDomId(peer);
             d.appendChild(video);
-            var vol = document.createElement('div');
-            vol.id = 'volume_' + peer.id;
-            vol.className = 'volume_bar';
-            video.onclick = function () {
-                video.style.width = video.videoWidth + 'px';
-                video.style.height = video.videoHeight + 'px';
-            };
-            d.appendChild(vol);
             remotes.appendChild(d);
+            $(function () {
+                $("#" + d.id).draggable();
+                $("#" + d.id).resizable();
+            });
         }
     });
 

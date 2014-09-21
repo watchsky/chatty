@@ -1,22 +1,65 @@
 var userInfos = require("../models/user-infos.js");
 var rooms = require("../models/rooms.js");
+var jsonToken = require("../models/json-token.js");
 
 var layoutPath = "layout/home-page-layout";
+var anonymousUserNavbarInfo = [{url: "/login", desc: "登录", id: "login"}, {url: "/register", desc: "注册", id: "register"}];
+var loggingUserNavbarInfo = [{url: "/myInformation", desc: "我的主页", id: "myInformation"}, {url: "/quit", desc: "退出", id: "quit"}];
 
 exports.indexView = function (req, res) {
-    res.render("index", {layout: layoutPath});
+    var sessionUser = req.session.user || " ";
+    var sessionToken = req.session.token || " ";
+
+    if (sessionUser === " " || sessionToken === " ") {
+        res.render("index", {layout: layoutPath, navbar: anonymousUserNavbarInfo});
+    } else {
+        //need authority
+        res.render("index", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+    }
 };
 
 exports.aboutView = function (req, res) {
-    res.render("about", {layout: layoutPath});
+    var sessionUser = req.session.user || " ";
+    var sessionToken = req.session.token || " ";
+
+    if (sessionUser === " " || sessionToken === " ") {
+        res.render("about", {layout: layoutPath, navbar: anonymousUserNavbarInfo});
+    } else {
+        //need authority
+        res.render("about", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+    }
 };
 
 exports.loginView = function (req, res) {
-    res.render("login", {layout: layoutPath});
+    var sessionUser = req.session.user || " ";
+    var sessionToken = req.session.token || " ";
+
+    if (sessionUser === " " || sessionToken === " ") {
+        res.render("login", {layout: layoutPath, navbar: anonymousUserNavbarInfo});
+    } else {
+        res.send(200, "用户" + sessionUser + "已经登录了本系统，如果您想用其他用户名登录请先退出本用户的登录。");
+    }
 };
 
 exports.registerView = function (req, res) {
-    res.render("register", {layout: layoutPath});
+    var sessionUser = req.session.user || " ";
+    var sessionToken = req.session.token || " ";
+
+    if (sessionUser === " " || sessionToken === " ") {
+        res.render("register", {layout: layoutPath, navbar: anonymousUserNavbarInfo});
+    } else {
+        res.send(200, "用户" + sessionUser + "已经登录了本系统，如果您想注册请先退出本用户的登录。");
+    }
+};
+
+exports.myInformation = function (req, res) {
+    res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+};
+
+exports.quit = function (req, res) {
+    req.session.user = null;
+    req.session.token = null;
+    res.render("index", {layout: layoutPath, navbar: anonymousUserNavbarInfo});
 };
 
 exports.validateLoginData = function (req, res) {
@@ -52,6 +95,36 @@ exports.login = function (req, res) {
     }
 };
 
+exports.loginWithToken = function (req, res) {
+    var token = req.body.token;
+
+    if (token === undefined || token === null) {
+        res.json(400, {});
+    } else {
+        jsonToken.verifyToken(token, {}, function (err, decoded) {
+            if (err || decoded === undefined) {
+                console.error("Invalid Token");
+                console.error(err);
+                res.json(400, {});
+            } else {
+                userInfos.findOne({username: decoded.username, token: token}, function (err, doc) {
+                    if (err) {
+                        console.error(err);
+                        res.json(500, {});
+                    } else if (doc === null) {
+                        console.error("Invalid Token");
+                        res.json(400, {});
+                    } else {
+                        req.session.user = doc.username;
+                        req.session.token = doc.token;
+                        res.json(200, {successLogin: true});
+                    }
+                });
+            }
+        });
+    }
+};
+
 exports.validateRegisterData = function (req, res) {
     var username = req.body.inputRegisterUserName;
 
@@ -77,17 +150,20 @@ exports.register = function (req, res) {
     var username = req.body.inputRegisterUserName;
     var email = req.body.inputMail;
     var password = req.body.inputRegisterPassword;
+    var confirmPassword = req.body.confirmPassword;
 
-    if (username === undefined || email === undefined || password === undefined) {
+    if (username === undefined || email === undefined || password === undefined || confirmPassword === undefined ||
+        password !== confirmPassword) {
         res.send(400, {});
     } else {
+        var token = jsonToken.createToken({username: username, email: email});
         userInfos.insert({"username": username, "password": password, "email": email,
-            "createdTime": Date.now(), "updatedTime": Date.now()}, function (err, document) {
+            "createdTime": Date.now(), "updatedTime": Date.now(), "token": token}, function (err, document) {
             if (err) {
                 console.error(err);
                 res.send(500, {});
             } else {
-                res.send("注册用户成功"); //TODO: render other page
+                res.render("finished-registration", {layout: layoutPath, navbar: anonymousUserNavbarInfo, token: token});
             }
         });
     }
@@ -143,8 +219,10 @@ exports.joinRoom = function (req, res) {
         res.send(400, {});
         return;
     }
+    var sessionUser = req.session.user || " ";
+    var sessionToken = req.session.token || " ";
 
-    if (req.session.user === undefined || req.session.user === null) {
+    if (sessionUser === " " || sessionToken === " ") {
         rooms.findOne({"name": roomName}, function (err, document) {
             if (err) {
                 console.error(err);
@@ -154,7 +232,9 @@ exports.joinRoom = function (req, res) {
                 if (document === null) {
                     username = "_anonymousUser1";
                     var newRoomRecord = {name: roomName, password: "", accumulativeUserNumber: 1,
-                        users: [{name: username, isAnonymous: true}]};
+                        users: [
+                            {name: username, isAnonymous: true}
+                        ]};
                     rooms.insert(newRoomRecord, function (err, doc) {
                         joinRoomCallback(err, res, roomName, "", username, true);
                     });
