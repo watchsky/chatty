@@ -91,7 +91,7 @@ exports.login = function (req, res) {
     if (username === undefined || password === undefined) {
         res.send(400, {});
     } else {
-        res.send("用户登录成功"); //TODO: render other page
+        res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
     }
 };
 

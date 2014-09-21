@@ -112,6 +112,7 @@ function userExists(username) {
 }
 
 function validateLoginData() {
+    setUserCookieForRememberMe();
     var username = $("#inputUserName").val().trim();
     var password = $("#inputPassword").val();
     var usernamePattern = new RegExp("^[A-Za-z][A-Za-z0-9]*$");
@@ -239,5 +240,27 @@ function validateRoom() {
     } else {
         $("#roomName").val(roomName);
         return true;
+    }
+}
+
+$(document).ready(function () {
+    if ($.cookie("l_username") !== undefined) {
+        $("#rememberMe").attr("checked", true);
+    } else {
+        $("#rememberMe").attr("checked", false);
+    }
+    if ($("#rememberMe:checked").length > 0) {
+        $("#inputUserName").val($.cookie("l_username"));
+        $("#inputPassword").val($.cookie("l_password"));
+    }
+});
+
+function setUserCookieForRememberMe() {
+    if ($("#rememberMe:checked").length > 0) {
+        $.cookie("l_username", $("#inputUserName").val().trim(), { expires: 7 });
+        $.cookie("l_password", $("#inputPassword").val(), { expires: 7 });
+    } else {
+        $.removeCookie("l_username");
+        $.removeCookie("l_password");
     }
 }
