@@ -52,14 +52,21 @@ exports.registerView = function (req, res) {
     }
 };
 
-exports.myInformation = function (req, res) {
-    res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+exports.myInformation = function (req, res, next) {
+    var sessionUser = req.session.user || " ";
+    var sessionToken = req.session.token || " ";
+
+    if (sessionUser === " " || sessionToken === " ") {
+        next();
+    } else {
+        res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+    }
 };
 
 exports.quit = function (req, res) {
     req.session.user = null;
     req.session.token = null;
-    res.render("index", {layout: layoutPath, navbar: anonymousUserNavbarInfo});
+    res.redirect("/");
 };
 
 exports.validateLoginData = function (req, res) {
@@ -84,28 +91,40 @@ exports.validateLoginData = function (req, res) {
     }
 };
 
-exports.login = function (req, res) {
-    var username = req.body.inputUserName;
-    var password = req.body.inputPassword;
+exports.login = function (req, res, next) {
+    var username = req.body.inputUserName || " ";
+    var password = req.body.inputPassword || " ";
 
-    if (username === undefined || password === undefined) {
-        res.send(400, {});
+    if (username === " " || password === " ") {
+        next();
     } else {
-        res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+        userInfos.findOne({"username": username, "password": password}, function (err, document) {
+            if (err) {
+                console.error(err);
+                next(err);
+            } else if (document === null) {
+                console.error("Verification is Error");
+                next();
+            } else {
+                req.session.user = document.username;
+                req.session.token = document.token;
+                res.redirect("/myInformation");
+            }
+        });
     }
 };
 
 exports.loginWithToken = function (req, res) {
-    var token = req.body.token;
+    var token = req.body.token || " ";
 
-    if (token === undefined || token === null) {
-        res.json(400, {});
+    if (token === " ") {
+        res.json(404, {});
     } else {
         jsonToken.verifyToken(token, {}, function (err, decoded) {
             if (err || decoded === undefined) {
                 console.error("Invalid Token");
                 console.error(err);
-                res.json(400, {});
+                res.json(404, {});
             } else {
                 userInfos.findOne({username: decoded.username, token: token}, function (err, doc) {
                     if (err) {
@@ -113,7 +132,7 @@ exports.loginWithToken = function (req, res) {
                         res.json(500, {});
                     } else if (doc === null) {
                         console.error("Invalid Token");
-                        res.json(400, {});
+                        res.json(404, {});
                     } else {
                         req.session.user = doc.username;
                         req.session.token = doc.token;
@@ -146,7 +165,7 @@ exports.validateRegisterData = function (req, res) {
     }
 };
 
-exports.register = function (req, res) {
+exports.register = function (req, res, next) {
     var username = req.body.inputRegisterUserName;
     var email = req.body.inputMail;
     var password = req.body.inputRegisterPassword;
@@ -154,14 +173,14 @@ exports.register = function (req, res) {
 
     if (username === undefined || email === undefined || password === undefined || confirmPassword === undefined ||
         password !== confirmPassword) {
-        res.send(400, {});
+        next();
     } else {
         var token = jsonToken.createToken({username: username, email: email});
         userInfos.insert({"username": username, "password": password, "email": email,
             "createdTime": Date.now(), "updatedTime": Date.now(), "token": token}, function (err, document) {
             if (err) {
                 console.error(err);
-                res.send(500, {});
+                next(err);
             } else {
                 res.render("finished-registration", {layout: layoutPath, navbar: anonymousUserNavbarInfo, token: token});
             }
@@ -173,7 +192,7 @@ exports.validateRoom = function (req, res) {
     var roomName = req.body.roomName;
 
     if (roomName === undefined) {
-        res.json(400, {});
+        res.json(404, {});
     } else {
         rooms.findOne({"name": roomName}, function (err, document) {
             if (err) {
@@ -213,10 +232,10 @@ exports.validateRoomPassword = function (req, res) {
     }
 };
 
-exports.joinRoom = function (req, res) {
-    var roomName = req.body.roomName;
-    if (roomName === undefined) {
-        res.send(400, {});
+exports.joinRoom = function (req, res, next) {
+    var roomName = req.body.roomName || " ";
+    if (roomName === " ") {
+        next();
         return;
     }
     var sessionUser = req.session.user || " ";
@@ -226,7 +245,7 @@ exports.joinRoom = function (req, res) {
         rooms.findOne({"name": roomName}, function (err, document) {
             if (err) {
                 console.error(err);
-                res.send(500, {});
+                next(err);
             } else {
                 var username;
                 if (document === null) {
@@ -236,12 +255,12 @@ exports.joinRoom = function (req, res) {
                             {name: username, isAnonymous: true}
                         ]};
                     rooms.insert(newRoomRecord, function (err, doc) {
-                        joinRoomCallback(err, res, roomName, "", username, true);
+                        joinRoomCallback(err, res, roomName, "", username, true, next);
                     });
                 } else {
                     username = "_anonymousUser" + (document.accumulativeUserNumber + 1);
                     rooms.addUserToRoom(roomName, username, true, function (err) {
-                        joinRoomCallback(err, res, roomName, document.password, username, true);
+                        joinRoomCallback(err, res, roomName, document.password, username, true, next);
                     });
                 }
             }
@@ -251,10 +270,10 @@ exports.joinRoom = function (req, res) {
     }
 };
 
-function joinRoomCallback(err, res, roomName, roomPassword, username, isAnonymous) {
+function joinRoomCallback(err, res, roomName, roomPassword, username, isAnonymous, next) {
     if (err) {
         console.error(err);
-        res.send(500, {});
+        next(err);
     } else {
         res.render("layout/chat-layout", {subTemplate: {templateName: "anonymous-user-menu", roomName: roomName, roomPassword: roomPassword},
             username: username, isAnonymous: isAnonymous});
