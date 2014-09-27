@@ -47,11 +47,7 @@ body, ul, li {
     background: url("/images/drop.png") no-repeat right 7px;
 }
 
-.dropdown_1column,
-.dropdown_2columns,
-.dropdown_3columns,
-.dropdown_4columns,
-.dropdown_5columns {
+#menu .dropdown {
     margin: 4px auto;
     float: left;
     position: absolute;
@@ -63,31 +59,7 @@ body, ul, li {
     background: #F4F4F4;
 }
 
-.dropdown_1column {
-    width: 110px;
-}
-
-.dropdown_2columns {
-    width: 210px;
-}
-
-.dropdown_3columns {
-    width: 310px;
-}
-
-.dropdown_4columns {
-    width: 410px;
-}
-
-.dropdown_5columns {
-    width: 510px;
-}
-
-#menu li:hover .dropdown_1column,
-#menu li:hover .dropdown_2columns,
-#menu li:hover .dropdown_3columns,
-#menu li:hover .dropdown_4columns,
-#menu li:hover .dropdown_5columns {
+#menu li:hover .dropdown {
     left: -1px;
     margin-top: 11px;
     background: #fff;
@@ -188,3 +160,15 @@ body, ul, li {
     padding: 0;
 }
 
+#menu_notification_message {
+    width: 45px;
+}
+
+#notification_size {
+    color: #f40;
+    font-weight: bold;
+}
+
+#menu .site-nav-pipe {
+    color: #ddd;
+}

@@ -3,6 +3,6 @@
     <li class="text"><a id="icon_link" href="#"><img src="/images/chat-icon.gif" alt="Chatty icon image"/></a></li>
     <li class="text">房间名: <%= roomName %></li>
     <li class="text" id="room_password">密码: <span><%= roomPassword %></span></li>
-    <%- partial(templateName, {})%>
+    <%- partial(templateName, {username: username})%>
 
 </ul>

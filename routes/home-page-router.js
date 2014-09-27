@@ -3,8 +3,14 @@ var rooms = require("../models/rooms.js");
 var jsonToken = require("../models/json-token.js");
 
 var layoutPath = "layout/home-page-layout";
-var anonymousUserNavbarInfo = [{url: "/login", desc: "登录", id: "login"}, {url: "/register", desc: "注册", id: "register"}];
-var loggingUserNavbarInfo = [{url: "/myInformation", desc: "我的主页", id: "myInformation"}, {url: "/quit", desc: "退出", id: "quit"}];
+var anonymousUserNavbarInfo = [
+    {url: "/login", desc: "登录", id: "login"},
+    {url: "/register", desc: "注册", id: "register"}
+];
+var loggingUserNavbarInfo = [
+    {url: "/myInformation", desc: "我的主页", id: "myInformation"},
+    {url: "/quit", desc: "退出", id: "quit"}
+];
 
 exports.indexView = function (req, res) {
     var sessionUser = req.session.user || " ";
@@ -59,7 +65,17 @@ exports.myInformation = function (req, res, next) {
     if (sessionUser === " " || sessionToken === " ") {
         next();
     } else {
-        res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+        userInfos.findOne({username: sessionUser, token: sessionToken}, function (err, doc) {
+            if (err) {
+                console.error(err);
+                next(err);
+            } else if (doc === null) {
+                console.error("Invalid Token");
+                next();
+            } else {
+                res.render("myInformation", {layout: layoutPath, navbar: loggingUserNavbarInfo});
+            }
+        });
     }
 };
 
@@ -266,7 +282,34 @@ exports.joinRoom = function (req, res, next) {
             }
         });
     } else {
-
+        userInfos.findOne({username: sessionUser, token: sessionToken}, function (err, doc) {
+            if (err) {
+                console.error(err);
+                next(err);
+            } else if (doc === null) {
+                console.error("Invalid Token");
+                next();
+            } else {
+                rooms.findOne({"name": roomName}, function (err, document) {
+                    if (err) {
+                        console.error(err);
+                        next(err);
+                    } else if (document === null) {
+                        var newRoomRecord = {name: roomName, password: "", accumulativeUserNumber: 1,
+                            users: [
+                                {name: sessionUser, isAnonymous: false}
+                            ]};
+                        rooms.insert(newRoomRecord, function (err, doc) {
+                            joinRoomCallback(err, res, roomName, "", sessionUser, false, next);
+                        });
+                    } else {
+                        rooms.addUserToRoom(roomName, sessionUser, false, function (err) {
+                            joinRoomCallback(err, res, roomName, document.password, sessionUser, false, next);
+                        });
+                    }
+                });
+            }
+        });
     }
 };
 
@@ -275,7 +318,13 @@ function joinRoomCallback(err, res, roomName, roomPassword, username, isAnonymou
         console.error(err);
         next(err);
     } else {
-        res.render("layout/chat-layout", {subTemplate: {templateName: "anonymous-user-menu", roomName: roomName, roomPassword: roomPassword},
-            username: username, isAnonymous: isAnonymous});
+        var templateName;
+        if (isAnonymous) {
+            templateName = "anonymous-user-menu";
+        } else {
+            templateName = "non-anonymous-user-menu";
+        }
+        res.render("layout/chat-layout", {subTemplate: {templateName: templateName, roomName: roomName, roomPassword: roomPassword, username: username},
+            isAnonymous: isAnonymous});
     }
 }
