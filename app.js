@@ -47,6 +47,8 @@ app.post('/joinRoom', homePageRouter.joinRoom);
 app.post('/setRoomPassword', chatPageRouter.setRoomPassword);
 app.post('/getIceServerAccountInfo', iceServerAccountService.getIceServerAccountInfo);
 app.post('/addFriend', chatPageRouter.addFriend);
+app.post('/getAllFriends', chatPageRouter.getAllFriends);
+app.post('/deleteFriend', chatPageRouter.deleteFriend);
 
 /// catch 404 and forward to error handler
 app.use(function (req, res, next) {
