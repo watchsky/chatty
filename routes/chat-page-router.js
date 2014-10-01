@@ -1,6 +1,7 @@
 var rooms = require("../models/rooms.js");
 var userInfos = require("../models/user-infos.js");
 var friends = require("../models/friends.js");
+var notifications = require("../models/notifications.js");
 
 exports.setRoomPassword = function (req, res) {
     var roomName = req.body.roomName;
@@ -40,7 +41,9 @@ exports.addFriend = function (req, res) {
                         res.json(500, {statusOfAddingFriend: 0});
                     } else {
                         res.json(200, {statusOfAddingFriend: status});
-                        //TODO: add notification event
+                        if (status === friends.STATUS_ADD_FRIEND_SECCESS) {
+                            notifications.addBeingAddedFriendNotification(friendName, username);
+                        }
                     }
                 });
             }
@@ -80,7 +83,28 @@ exports.deleteFriend = function (req, res) {
                 res.json(500, {statusOfDeletingFriend: 0});
             } else {
                 res.json(200, {statusOfDeletingFriend: 1});
-                //TODO: add notification event
+                if (status === friends.STATUS_DELETE_FRIEND_SECCESS) {
+                    notifications.addBeingDeletedFriendNotification(friendName, username);
+                }
+            }
+        });
+    }
+};
+
+exports.inviteFriendToChat = function (req, res) {
+    var username = req.body.username || " ";
+    var friendName = req.body.friendName || " ";
+    var roomName = req.body.roomName || " ";
+    var sessionUser = req.session.user || " ";
+
+    if (roomName === " " || username === " " || friendName === " " || sessionUser === " " || username !== sessionUser) {
+        res.json(400, {statusOfInvitingFriendToChat: 0});
+    } else {
+        notifications.addBeingInvitedFriendNotification(friendName, username, roomName, function (err, doc) {
+            if (err || doc === null) {
+                res.json(500, {statusOfInvitingFriendToChat: 0});
+            } else {
+                res.json(200, {statusOfInvitingFriendToChat: 1});
             }
         });
     }

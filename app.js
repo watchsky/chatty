@@ -49,6 +49,7 @@ app.post('/getIceServerAccountInfo', iceServerAccountService.getIceServerAccount
 app.post('/addFriend', chatPageRouter.addFriend);
 app.post('/getAllFriends', chatPageRouter.getAllFriends);
 app.post('/deleteFriend', chatPageRouter.deleteFriend);
+app.post('/inviteFriendToChat', chatPageRouter.inviteFriendToChat);
 
 /// catch 404 and forward to error handler
 app.use(function (req, res, next) {

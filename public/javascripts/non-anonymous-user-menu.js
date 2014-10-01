@@ -23,15 +23,18 @@ $(document).ready(function () {
         }
         $.ajax({url: "/addFriend", type: "POST", dataType: "json", data: "username=" + _username + "&friendName=" + friendName,
             success: function (data, status) {
-                if (status !== "success" || data.statusOfAddingFriend === 0) {
+                if (status === "success" && data) {
+                    if (data.statusOfAddingFriend === 1) {
+                        window.alert("添加好友" + friendName + "成功。");
+                    } else if (data.statusOfAddingFriend === 2) {
+                        window.alert("重复添加好友。" + friendName + "早已是您的好友了。");
+                    } else if (data.statusOfAddingFriend === 3) {
+                        window.alert("添加好友失败。" + "用户" + friendName + "不存在。");
+                    } else {
+                        window.alert("添加好友" + friendName + "失败。");
+                    }
+                } else {
                     window.alert("添加好友" + friendName + "失败。");
-                } else if (data.statusOfAddingFriend === 2) {
-                    window.alert("重复添加好友。" + friendName + "早已是您的好友了。");
-                } else if (data.statusOfAddingFriend === 3) {
-                    window.alert("添加好友失败。" + "用户" + friendName + "不存在。");
-                }
-                else {
-                    window.alert("添加好友" + friendName + "成功。");
                 }
             }});
     });
@@ -44,7 +47,9 @@ $(document).ready(function () {
                 if (status !== "success" || friends === undefined || friends.length === undefined) {
                     return;
                 }
-                //TODO: sort friends
+                friends = _.sortBy(friends, function (friend) {
+                    return friend;
+                });
                 updateFriendList(friends);
             }});
     });
@@ -101,7 +106,15 @@ function createSubMenu(friendName) {
 function inviteFriendToChat(event) {
     event.preventDefault();
 
-    console.log($(event.target).attr("friendName"));
+    var friendName = $(event.target).attr("friendName");
+    $.ajax({url: "/inviteFriendToChat", type: "POST", dataType: "json", data: "username=" + _username + "&friendName=" + friendName + "&roomName=" + _roomName,
+        success: function (data, status) {
+            if (status === "success" && data && data.statusOfInvitingFriendToChat === 1) {
+                window.alert("邀请好友" + friendName + "参加视频的请求已发出。");
+            } else {
+                window.alert("邀请好友" + friendName + "参加视频失败。");
+            }
+        }});
 }
 
 function deleteFriend(event) {
@@ -110,12 +123,12 @@ function deleteFriend(event) {
     var friendName = $(event.target).attr("friendName");
     $.ajax({url: "/deleteFriend", type: "POST", dataType: "json", data: "username=" + _username + "&friendName=" + friendName,
         success: function (data, status) {
-            if (status !== "success" || data.statusOfDeletingFriend === undefined || data.statusOfDeletingFriend === 0) {
+            if (status === "success" && data && data.statusOfDeletingFriend === 1) {
+                $("#" + friendName).remove();
+                window.alert("删除好友" + friendName + "成功。");
+            } else {
                 window.alert("删除好友" + friendName + "失败。");
-                return;
             }
-            $("#" + friendName).remove();
-            window.alert("删除好友" + friendName + "成功。");
         }});
 }
 
