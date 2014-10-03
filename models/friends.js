@@ -1,10 +1,12 @@
-var db = require("./db");
+var Db = require("mongodb").Db;
+var Server = require("mongodb").Server;
 var dbSettings = require("./db-settings");
 
 var friends = {};
 
 module.exports = friends;
 
+friends.db = new Db(dbSettings.db, new Server(dbSettings.host, dbSettings.post));
 friends.tableName = "friends";
 friends.STATUS_ADD_FRIEND_FAIL = 0;
 friends.STATUS_ADD_FRIEND_SECCESS = 1;
@@ -93,7 +95,7 @@ friends.deleteFriend = function (username, friendName, callback) {
 };
 
 function handle(handler, data, callback) {
-    db.open(function (err, db) {
+    friends.db.open(function (err, db) {
         if (err !== null) {
             callback(err);
         } else {

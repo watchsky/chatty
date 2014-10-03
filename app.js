@@ -42,7 +42,7 @@ app.post('/register', homePageRouter.register);
 
 app.post('/validateRoom', homePageRouter.validateRoom);
 app.post('/validateRoomPassword', homePageRouter.validateRoomPassword);
-app.post('/joinRoom', homePageRouter.joinRoom);
+app.get('/joinRoom', homePageRouter.joinRoom);
 
 app.post('/setRoomPassword', chatPageRouter.setRoomPassword);
 app.post('/getIceServerAccountInfo', iceServerAccountService.getIceServerAccountInfo);
@@ -50,6 +50,8 @@ app.post('/addFriend', chatPageRouter.addFriend);
 app.post('/getAllFriends', chatPageRouter.getAllFriends);
 app.post('/deleteFriend', chatPageRouter.deleteFriend);
 app.post('/inviteFriendToChat', chatPageRouter.inviteFriendToChat);
+app.post('/getNotifications', chatPageRouter.getNotifications);
+app.post('/deleteNotifications', chatPageRouter.deleteNotifications);
 
 /// catch 404 and forward to error handler
 app.use(function (req, res, next) {

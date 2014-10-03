@@ -1,7 +1,7 @@
 <div class="jumbotron">
     <div class="icon-panel"><img src="/images/chat-icon.gif" alt="Chatty icon image"/></div>
     <div class="form-panel">
-        <form class="room-form" action="/joinRoom" method="post" onsubmit="return validateRoom();">
+        <form class="room-form" action="/joinRoom" method="get" onsubmit="return validateRoom();">
             <input type="text" id="roomName" name="roomName" placeholder="请输入房间名" autofocus="autofocus"/>
             <span class="submit_span"><input type="submit" value="Let's chat" id="room_submit"/></span>
         </form>

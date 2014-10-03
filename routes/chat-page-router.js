@@ -42,7 +42,11 @@ exports.addFriend = function (req, res) {
                     } else {
                         res.json(200, {statusOfAddingFriend: status});
                         if (status === friends.STATUS_ADD_FRIEND_SECCESS) {
-                            notifications.addBeingAddedFriendNotification(friendName, username);
+                            friends.addFriend(friendName, username, function (err, status) {
+                                if (err === null && status === friends.STATUS_ADD_FRIEND_SECCESS) {
+                                    notifications.addBeingAddedFriendNotification(friendName, username);
+                                }
+                            });
                         }
                     }
                 });
@@ -84,7 +88,11 @@ exports.deleteFriend = function (req, res) {
             } else {
                 res.json(200, {statusOfDeletingFriend: 1});
                 if (status === friends.STATUS_DELETE_FRIEND_SECCESS) {
-                    notifications.addBeingDeletedFriendNotification(friendName, username);
+                    friends.deleteFriend(friendName, username, function (err, status) {
+                        if (err === null && status === friends.STATUS_DELETE_FRIEND_SECCESS) {
+                            notifications.addBeingDeletedFriendNotification(friendName, username);
+                        }
+                    });
                 }
             }
         });
@@ -105,6 +113,40 @@ exports.inviteFriendToChat = function (req, res) {
                 res.json(500, {statusOfInvitingFriendToChat: 0});
             } else {
                 res.json(200, {statusOfInvitingFriendToChat: 1});
+            }
+        });
+    }
+};
+
+exports.getNotifications = function (req, res) {
+    var username = req.body.username || " ";
+    var sessionUser = req.session.user || " ";
+
+    if (username === " " || sessionUser === " " || username !== sessionUser) {
+        res.json(400, {notifications: []});
+    } else {
+        notifications.getNotifications(username, function (err, notifications) {
+            if (err) {
+                res.json(500, {notifications: []});
+            } else {
+                res.json(200, {notifications: notifications});
+            }
+        });
+    }
+};
+
+exports.deleteNotifications = function (req, res) {
+    var username = req.body.username || " ";
+    var sessionUser = req.session.user || " ";
+
+    if (username === " " || sessionUser === " " || username !== sessionUser) {
+        res.json(400, {deleteNotificationsSuccess: false});
+    } else {
+        notifications.deleteNotifications(username, function (err) {
+            if (err) {
+                res.json(500, {deleteNotificationsSuccess: false});
+            } else {
+                res.json(200, {deleteNotificationsSuccess: true});
             }
         });
     }

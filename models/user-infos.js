@@ -1,10 +1,12 @@
-var db = require("./db");
+var Db = require("mongodb").Db;
+var Server = require("mongodb").Server;
 var dbSettings = require("./db-settings");
 
 var userInfos = {};
 
 module.exports = userInfos;
 
+userInfos.db = new Db(dbSettings.db, new Server(dbSettings.host, dbSettings.post));
 userInfos.tableName = "userInfos";
 
 userInfos.findOne = function (query, callback) {
@@ -16,7 +18,7 @@ userInfos.insert = function (document, callback) {
 };
 
 function handle(handler, data, callback) {
-    db.open(function (err, db) {
+    userInfos.db.open(function (err, db) {
         if (err !== null) {
             callback(err);
         } else {

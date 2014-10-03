@@ -1,4 +1,10 @@
+var _notifications = [];
+var _notificationDialog;
+
 $(document).ready(function () {
+
+    getNotificationsEveryTenSeconds();
+
     $("#menu_add_friend").click(function (event) {
         event.preventDefault();
         var friendName = window.prompt("请输入要添加的好友的名字:", "");
@@ -52,6 +58,21 @@ $(document).ready(function () {
                 });
                 updateFriendList(friends);
             }});
+    });
+
+    $("#menu_notification_message").click(function (event) {
+        event.preventDefault();
+
+        if (_notifications.length === 0) {
+            window.alert("暂无消息通知。");
+        } else {
+            $.ajax({url: "/deleteNotifications", type: "POST", dataType: "json", data: "username=" + _username,
+                success: function (data, status) {
+                    createNotificationPopup(_notifications);
+                    _notifications = [];
+                    $("#notification_size").html("0");
+                }});
+        }
     });
 });
 
@@ -138,4 +159,85 @@ function setMenuItemBackground(event) {
 
 function clearMenuItemBackground(event) {
     event.currentTarget.parentNode.childNodes[0].setAttribute("class", "");
+}
+
+function getNotifications() {
+    $.ajax({url: "/getNotifications", type: "POST", dataType: "json", data: "username=" + _username,
+        success: function (data, status) {
+            if (status === "success" && data && (data.notifications instanceof Array)) {
+                if (data.notifications.length !== 0) {
+                    _notifications = data.notifications;
+                    $("#notification_size").html(_notifications.length);
+                }
+            }
+        }});
+}
+
+function getNotificationsEveryTenSeconds() {
+    getNotifications();
+    setTimeout("getNotificationsEveryTenSeconds();", 10000);
+}
+
+function createNotificationPopup(notifications) {
+    var notificationPanel = createNotificationPanel(notifications);
+    $("body").append(notificationPanel);
+    _notificationDialog = notificationPanel.dialog({
+        modal: true,
+        height: 300,
+        width: 450,
+        resizable: false,
+        position: {my: "center center", at: "center center", of: window},
+        closeOnEscape: true,
+        title: "消息",
+        close: function (event, ui) {
+            _notificationDialog.dialog("destroy");
+            $("#notification_panel").remove();
+        },
+        overflow:"visible"
+    });
+}
+
+function createNotificationPanel(notifications) {
+    var notificationPanel = $("<div id='notification_panel'></div>");
+    var ulElement = $("<ul></ul>");
+    for (var i = 0; i < notifications.length; i++) {
+        var notification = notifications[i];
+        var liElement = $("<li></li>");
+        var divElement = $("<div></div>");
+        var time = $("<span class='time'></span>").html(getTime(notification.time));
+        var fromWho = $("<span class='fromWho'></span>").html(notification.fromWho);
+        var message = $("<span></span>");
+        if (notification.type === "BeAddedToFriends") {
+            message.append(fromWho, "添加您成为了好友。");
+            divElement.append(time, message);
+        } else if (notification.type === "BeDeletedFromFriends") {
+            message.append(fromWho, "删除了与您的好友关系。");
+            divElement.append(time, message);
+        } else {
+            message.append(fromWho, "邀请您一起聊天。");
+            var acceptButton = $("<a class='btn btn-default btn-lg'>接受邀请</a>");
+            acceptButton.attr("href", "/joinRoom?roomName=" + notification.data);
+            acceptButton.click(acceptInvitation);
+            divElement.append(time, message, acceptButton);
+        }
+        liElement.append(divElement);
+        ulElement.append(liElement);
+    }
+    notificationPanel.append(ulElement);
+    return notificationPanel;
+}
+
+function getTime(time) {
+    var date = new Date(time);
+    var formatTime = date.getFullYear() + "-" + formatNumber(date.getMonth() + 1) + "-" + formatNumber(date.getDate()) +
+        " " + formatNumber(date.getHours()) + ":" + formatNumber(date.getMinutes()) + ":" + formatNumber(date.getSeconds());
+    return formatTime;
+}
+
+function formatNumber(number) {
+    return (number >= 10) ? (number + "") : ("0" + number);
+}
+
+function acceptInvitation(event) {
+    _webrtcClient.quitVideo();
 }

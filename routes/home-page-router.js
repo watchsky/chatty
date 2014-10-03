@@ -249,7 +249,7 @@ exports.validateRoomPassword = function (req, res) {
 };
 
 exports.joinRoom = function (req, res, next) {
-    var roomName = req.body.roomName || " ";
+    var roomName = req.query.roomName || " ";
     if (roomName === " ") {
         next();
         return;

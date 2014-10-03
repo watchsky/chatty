@@ -1,0 +1,19 @@
+{
+  "name": "chatty",
+  "version": "0.0.1",
+  "authors": [
+    "Wu Xiang <wxiangshy@163.com>"
+  ],
+  "description": "a online chat app that supports multiple people chatting in the same time",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery-ui": "jquery/jquery-ui#1.11.1"
+  }
+}

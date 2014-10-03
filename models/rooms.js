@@ -1,10 +1,12 @@
-var db = require("./db");
+var Db = require("mongodb").Db;
+var Server = require("mongodb").Server;
 var dbSettings = require("./db-settings");
 
 var rooms = {};
 
 module.exports = rooms;
 
+rooms.db = new Db(dbSettings.db, new Server(dbSettings.host, dbSettings.post));
 rooms.tableName = "rooms";
 rooms.MAX_USER_NUMBER_PER_ROOM = 5;
 
@@ -65,7 +67,7 @@ rooms.searchAUser = function (roomName, username, callback) {
 };
 
 function handle(handler, data, callback) {
-    db.open(function (err, db) {
+    rooms.db.open(function (err, db) {
         if (err !== null) {
             callback(err);
         } else {

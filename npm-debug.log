@@ -1,0 +1,79 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'jquery-ui@1.11.1',
+1 verbose cli   '--save' ]
+2 info using npm@1.4.14
+3 info using node@v0.10.29
+4 verbose readDependencies using package.json deps
+5 verbose cache add [ 'jquery-ui@1.11.1', null ]
+6 verbose cache add name=undefined spec="jquery-ui@1.11.1" args=["jquery-ui@1.11.1",null]
+7 verbose parsed url { protocol: null,
+7 verbose parsed url   slashes: null,
+7 verbose parsed url   auth: null,
+7 verbose parsed url   host: null,
+7 verbose parsed url   port: null,
+7 verbose parsed url   hostname: null,
+7 verbose parsed url   hash: null,
+7 verbose parsed url   search: null,
+7 verbose parsed url   query: null,
+7 verbose parsed url   pathname: 'jquery-ui@1.11.1',
+7 verbose parsed url   path: 'jquery-ui@1.11.1',
+7 verbose parsed url   href: 'jquery-ui@1.11.1' }
+8 verbose cache add name="jquery-ui" spec="1.11.1" args=["jquery-ui","1.11.1"]
+9 verbose parsed url { protocol: null,
+9 verbose parsed url   slashes: null,
+9 verbose parsed url   auth: null,
+9 verbose parsed url   host: null,
+9 verbose parsed url   port: null,
+9 verbose parsed url   hostname: null,
+9 verbose parsed url   hash: null,
+9 verbose parsed url   search: null,
+9 verbose parsed url   query: null,
+9 verbose parsed url   pathname: '1.11.1',
+9 verbose parsed url   path: '1.11.1',
+9 verbose parsed url   href: '1.11.1' }
+10 verbose addNamed [ 'jquery-ui', '1.11.1' ]
+11 verbose addNamed [ '1.11.1', '1.11.1' ]
+12 silly lockFile e0b598a6-jquery-ui-1-11-1 jquery-ui@1.11.1
+13 verbose lock jquery-ui@1.11.1 /Users/xiangwu/.npm/e0b598a6-jquery-ui-1-11-1.lock
+14 verbose url raw jquery-ui
+15 verbose url resolving [ 'https://registry.npmjs.org/', './jquery-ui' ]
+16 verbose url resolved https://registry.npmjs.org/jquery-ui
+17 info trying registry request attempt 1 at 21:08:33
+18 verbose etag "BS3OYZAT2X451EBCIFA3J6P3P"
+19 http GET https://registry.npmjs.org/jquery-ui
+20 http 304 https://registry.npmjs.org/jquery-ui
+21 silly registry.get cb [ 304,
+21 silly registry.get   { date: 'Thu, 02 Oct 2014 13:08:35 GMT',
+21 silly registry.get     server: 'Apache',
+21 silly registry.get     via: '1.1 varnish',
+21 silly registry.get     'last-modified': 'Thu, 02 Oct 2014 13:07:57 GMT',
+21 silly registry.get     'cache-control': 'max-age=60',
+21 silly registry.get     etag: '"BS3OYZAT2X451EBCIFA3J6P3P"',
+21 silly registry.get     'x-served-by': 'cache-ty68-TYO',
+21 silly registry.get     'x-cache': 'HIT',
+21 silly registry.get     'x-cache-hits': '1',
+21 silly registry.get     'x-timer': 'S1412255315.045349,VS0,VE0',
+21 silly registry.get     vary: 'Accept',
+21 silly registry.get     'content-length': '0',
+21 silly registry.get     'keep-alive': 'timeout=10, max=50',
+21 silly registry.get     connection: 'Keep-Alive' } ]
+22 verbose etag jquery-ui from cache
+23 silly lockFile e0b598a6-jquery-ui-1-11-1 jquery-ui@1.11.1
+24 silly lockFile e0b598a6-jquery-ui-1-11-1 jquery-ui@1.11.1
+25 error Error: version not found: jquery-ui@1.11.1
+25 error     at /usr/local/lib/node_modules/npm/lib/cache/add-named.js:123:12
+25 error     at saved (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/get.js:141:7)
+25 error     at /usr/local/lib/node_modules/npm/node_modules/graceful-fs/polyfills.js:133:7
+25 error     at Object.oncomplete (fs.js:107:15)
+26 error If you need help, you may report this *entire* log,
+26 error including the npm and node versions, at:
+26 error     <http://github.com/npm/npm/issues>
+27 error System Darwin 13.2.0
+28 error command "node" "/usr/local/bin/npm" "install" "jquery-ui@1.11.1" "--save"
+29 error cwd /Users/xiangwu/Project/node_project/chatty
+30 error node -v v0.10.29
+31 error npm -v 1.4.14
+32 verbose exit [ 1, true ]

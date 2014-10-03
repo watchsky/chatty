@@ -28,10 +28,6 @@ body, ul, li {
     background: #fff;
 }
 
-#menu li:hover.notification_message {
-    background: #f5f5f5;
-}
-
 #menu li a {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 14px;
@@ -106,10 +102,6 @@ body, ul, li {
     padding: 0 5px 0 5px;
 }
 
-#menu li:hover div a:hover {
-    background: #f5f5f5;
-}
-
 #menu li ul {
     list-style: none;
     padding: 0;
@@ -139,6 +131,15 @@ body, ul, li {
     height: 43px;
 }
 
+#menu li:hover.text,
+#menu li:hover.notification_message,
+#menu li:hover.site-nav-pipe,
+#my_friends_list ul a:hover,
+#menu li:hover div a:hover,
+.hover_background {
+    background: #f5f5f5;
+}
+
 #menu li:first-child {
     padding: 0;
 }
@@ -154,10 +155,6 @@ body, ul, li {
 
 #menu .site-nav-pipe {
     color: #ddd;
-}
-
-#menu li:hover.site-nav-pipe {
-    background: #f5f5f5;
 }
 
 #my_friends_list ul {
@@ -189,13 +186,5 @@ body, ul, li {
     white-space: nowrap;
     float: none;
     color: #6c6c6c;
-}
-
-#my_friends_list ul a:hover {
-    background: #f5f5f5;
-}
-
-.hover_background {
-    background: #f5f5f5;
 }
 

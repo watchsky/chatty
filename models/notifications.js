@@ -1,27 +1,29 @@
-var db = require("./db");
+var Db = require("mongodb").Db;
+var Server = require("mongodb").Server;
 var dbSettings = require("./db-settings");
 
 var notifications = {};
 
 module.exports = notifications;
 
+notifications.db = new Db(dbSettings.db, new Server(dbSettings.host, dbSettings.post));
 notifications.tableName = "notifications";
-notifications.TYPE_OF_BEING_ADDED_FRIEND = 1;
-notifications.TYPE_OF_BEING_DELETED_FRIEND = 2;
-notifications.TYPE_OF_BEING_INVITED_FRIEND = 3;
+notifications.TYPE_OF_BEING_ADDED_FRIEND = "BeAddedToFriends";
+notifications.TYPE_OF_BEING_DELETED_FRIEND = "BeDeletedFromFriends";
+notifications.TYPE_OF_BEING_INVITED_FRIEND = "BeInvitedToChat";
 
 notifications.addBeingAddedFriendNotification = function (username, fromWho, callback) {
-    var notificationRecord = {username: username, type: notifications.TYPE_OF_BEING_ADDED_FRIEND, fromWho: fromWho, data: ""};
+    var notificationRecord = {username: username, type: notifications.TYPE_OF_BEING_ADDED_FRIEND, fromWho: fromWho, data: "", time: Date.now()};
     handle(insertHandler, notificationRecord, callback);
 };
 
 notifications.addBeingDeletedFriendNotification = function (username, fromWho, callback) {
-    var notificationRecord = {username: username, type: notifications.TYPE_OF_BEING_DELETED_FRIEND, fromWho: fromWho, data: ""};
+    var notificationRecord = {username: username, type: notifications.TYPE_OF_BEING_DELETED_FRIEND, fromWho: fromWho, data: "", time: Date.now()};
     handle(insertHandler, notificationRecord, callback);
 };
 
 notifications.addBeingInvitedFriendNotification = function (username, fromWho, roomName, callback) {
-    var notificationRecord = {username: username, type: notifications.TYPE_OF_BEING_INVITED_FRIEND, fromWho: fromWho, data: roomName};
+    var notificationRecord = {username: username, type: notifications.TYPE_OF_BEING_INVITED_FRIEND, fromWho: fromWho, data: roomName, time: Date.now()};
     handle(insertHandler, notificationRecord, callback);
 };
 
@@ -34,7 +36,7 @@ notifications.deleteNotifications = function (username, callback) {
 };
 
 function handle(handler, data, callback) {
-    db.open(function (err, db) {
+    notifications.db.open(function (err, db) {
         if (err !== null) {
             console.error(err);
             if (callback)
@@ -60,14 +62,17 @@ function handle(handler, data, callback) {
 
 function findHandler(db, query, callback) {
     var cursor = db.collection(notifications.tableName).find(query);
-    db.close();
     if (cursor === null) {
+        db.close();
         callback(null, []);
     } else {
         cursor.toArray(function (err, documents) {
             if (err) {
+                db.close();
+                console.error(err);
                 callback(err);
             } else {
+                db.close();
                 callback(null, documents);
             }
         });
