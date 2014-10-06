@@ -4,6 +4,7 @@ var webrtcSupport = require('webrtcsupport');
 var attachMediaStream = require('attachmediastream');
 var mockconsole = require('mockconsole');
 var io = require('socket.io-client');
+var DetectRTC = require('./detectRTC.js');
 
 
 function WebRTCClient(opts, roomName, username) {
@@ -182,21 +183,16 @@ function WebRTCClient(opts, roomName, username) {
         self.webrtc.sendToAll('mute', {name: 'video'});
     });
     this.webrtc.on('localScreen', function (stream) {
-        var item,
-            el = document.createElement('video'),
-            container = self.getRemoteVideoContainer();
-
-        el.oncontextmenu = function () {
+        var video = document.createElement('video');
+        video.oncontextmenu = function () {
             return false;
         };
-        el.id = 'localScreen';
-        attachMediaStream(stream, el);
-        if (container) {
-            container.appendChild(el);
-        }
+        video.id = 'localScreen';
+        attachMediaStream(stream, video);
 
-        self.emit('localScreenAdded', el);
+        self.emit('localScreenAdded', video);
         self.connection.emit('shareScreen');
+        self.webrtc.localScreens.push(stream);
 
         self.webrtc.peers.forEach(function (existingPeer) {
             var peer;
@@ -247,7 +243,8 @@ WebRTCClient.prototype.leaveRoom = function () {
             peer.end();
         });
         if (this.getLocalScreen()) {
-            this.stopScreenShare();
+//            this.stopScreenShare();
+            this.webrtc.localScreen.stop();
         }
         this.emit('leftRoom', this.roomName);
         this.roomName = undefined;
@@ -425,6 +422,113 @@ WebRTCClient.prototype.stopScreenShare = function () {
         }
     });
     //delete this.webrtc.localScreen;
+};
+
+WebRTCClient.prototype.captureUserMedia = function (callback, extensionAvailable) {
+    var self = this;
+
+    var screen_constraints = {
+        mandatory: {
+            chromeMediaSource: DetectRTC.screen.chromeMediaSource,
+            maxWidth: screen.width > 1920 ? screen.width : 1920,
+            maxHeight: screen.height > 1080 ? screen.height : 1080
+        },
+        optional: [
+            { // non-official Google-only optional constraints
+                googTemporalLayeredScreencast: true
+            },
+            {
+                googLeakyBucket: true
+            }
+        ]
+    };
+
+    // try to check if extension is installed.
+    if (DetectRTC.isChrome && typeof extensionAvailable == 'undefined' && DetectRTC.screen.chromeMediaSource != 'desktop') {
+        DetectRTC.screen.isChromeExtensionAvailable(function (available) {
+            self.captureUserMedia(callback, available);
+        });
+        return;
+    }
+
+    if (DetectRTC.isChrome && DetectRTC.screen.chromeMediaSource == 'desktop' && !DetectRTC.screen.sourceId) {
+        DetectRTC.screen.getSourceId(function (error) {
+            if (error && error == 'PermissionDeniedError') {
+                alert('PermissionDeniedError: User denied to share content of his screen.');
+            }
+
+            self.captureUserMedia(callback);
+        });
+        return;
+    }
+
+    // for non-www.webrtc-experiment.com domains
+    if (DetectRTC.isChrome && !DetectRTC.screen.sourceId) {
+        window.addEventListener('message', function (event) {
+            if (event.data && event.data.chromeMediaSourceId) {
+                var sourceId = event.data.chromeMediaSourceId;
+
+                DetectRTC.screen.sourceId = sourceId;
+                DetectRTC.screen.chromeMediaSource = 'desktop';
+
+                if (sourceId == 'PermissionDeniedError') {
+                    return alert('User denied to share content of his screen.');
+                }
+
+                self.captureUserMedia(callback, true);
+            }
+
+            if (event.data && event.data.chromeExtensionStatus) {
+                console.log('Screen capturing extension status is:', event.data.chromeExtensionStatus);
+                DetectRTC.screen.chromeMediaSource = 'screen';
+                self.captureUserMedia(callback, true);
+            }
+        });
+        return;
+    }
+
+    if (DetectRTC.isChrome && DetectRTC.screen.chromeMediaSource == 'desktop') {
+        screen_constraints.mandatory.chromeMediaSourceId = DetectRTC.screen.sourceId;
+    }
+
+    var constraints = {
+        audio: false,
+        video: screen_constraints
+    };
+
+    var Firefox_Screen_Capturing_Warning = 'Make sure that you are using Firefox Nightly and you enabled: media.getusermedia.screensharing.enabled flag from about:config page. You also need to add your domain in "media.getusermedia.screensharing.allowed_domains" flag.';
+    if (!!navigator.mozGetUserMedia) {
+        console.warn(Firefox_Screen_Capturing_Warning);
+        constraints.video = {
+            mozMediaSource: 'window',
+            mediaSource: 'window',
+            maxWidth: screen.width > 1920 ? screen.width : 1920,
+            maxHeight: screen.height > 1080 ? screen.height : 1080,
+            minAspectRatio: 1.77
+        };
+    }
+
+    console.log(JSON.stringify(constraints, null, '\t'));
+
+    window.navigator.getMedia = (window.navigator.getUserMedia ||
+        window.navigator.webkitGetUserMedia ||
+        window.navigator.mozGetUserMedia ||
+        window.navigator.msGetUserMedia);
+
+    window.navigator.getMedia(constraints, function (stream) {
+        self.webrtc.emit("localScreen", stream);
+        callback(null, stream);
+    }, function (err) {
+        if (DetectRTC.isChrome && location.protocol === 'http:') {
+            alert('Please test this WebRTC experiment on HTTPS.');
+        } else if (DetectRTC.isChrome) {
+            alert('Screen capturing is either denied or not supported. Please install chrome extension for screen capturing or run chrome with command-line flag: --enable-usermedia-screen-capturing');
+        }
+        else if (!!navigator.mozGetUserMedia) {
+            alert(Firefox_Screen_Capturing_Warning);
+        }
+        callback(err);
+    });
 };
 
 WebRTCClient.prototype.testReadiness = function () {

@@ -66,6 +66,18 @@ $(document).ready(function () {
             }
         }
     });
+
+    _webrtcClient.on("localScreenAdded", function (videoEl) {
+        console.log('local screen added', videoEl);
+        var shareScreen = document.getElementById('shareScreen');
+        if (shareScreen) {
+            shareScreen.appendChild(videoEl);
+            $(function () {
+                $("#shareScreen").draggable();
+                $("#shareScreen").resizable();
+            });
+        }
+    });
 });
 
 function notifyOthersNewRoomPassword(password) {

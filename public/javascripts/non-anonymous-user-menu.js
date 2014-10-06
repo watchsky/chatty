@@ -74,6 +74,16 @@ $(document).ready(function () {
                 }});
         }
     });
+
+    $("#menu_share_screen").click(function (event) {
+        event.preventDefault();
+        _webrtcClient.captureUserMedia(function (err) {
+            console.log("************", "share screen");
+            if (err) {
+                console.error(err);
+            }
+        });
+    });
 });
 
 function updateFriendList(friends) {
@@ -241,3 +251,4 @@ function formatNumber(number) {
 function acceptInvitation(event) {
     _webrtcClient.quitVideo();
 }
+

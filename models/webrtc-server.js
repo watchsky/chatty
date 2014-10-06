@@ -83,6 +83,11 @@ WebRTCServer.prototype.listen = function (httpServer) {
             }
         });
 
+        socket.on("shareScreen", function () {
+            console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+            console.log("share screen");
+        });
+
     });
 };
 

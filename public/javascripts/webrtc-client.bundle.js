@@ -1,11 +1,79 @@
 (function(e){if("function"==typeof bootstrap)bootstrap("webrtcclient",e);else if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else if("undefined"!=typeof ses){if(!ses.ok())return;ses.makeWebRTCClient=e}else"undefined"!=typeof window?window.WebRTCClient=e():global.WebRTCClient=e()})(function(){var define,ses,bootstrap,module,exports;
 return (function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
+// DetectRTC.js - github.com/muaz-khan/WebRTC-Experiment/tree/master/DetectRTC
+// Below code is taken from RTCMultiConnection-v1.8.js (http://www.rtcmulticonnection.org/changes-log/#v1.8)
+var DetectRTC = {};
+
+module.exports = DetectRTC;
+
+DetectRTC.isChrome = !!navigator.webkitGetUserMedia;
+
+(function () {
+    DetectRTC.screenCallback = null;
+
+    DetectRTC.screen = {
+        chromeMediaSource: 'screen',
+        getSourceId: function (callback) {
+            if (!callback) throw '"callback" parameter is mandatory.';
+            DetectRTC.screenCallback = callback;
+            window.postMessage('get-sourceId', '*');
+        },
+        isChromeExtensionAvailable: function (callback) {
+            if (!callback) return;
+
+            if (DetectRTC.screen.chromeMediaSource == 'desktop') callback(true);
+
+            // ask extension if it is available
+            window.postMessage('are-you-there', '*');
+
+            setTimeout(function () {
+                if (DetectRTC.screen.chromeMediaSource == 'screen') {
+                    callback(false);
+                } else callback(true);
+            }, 2000);
+        },
+        onMessageCallback: function (data) {
+            // "cancel" button is clicked
+            if (data == 'PermissionDeniedError') {
+                DetectRTC.screen.chromeMediaSource = 'PermissionDeniedError';
+                if (DetectRTC.screenCallback) return DetectRTC.screenCallback('PermissionDeniedError');
+                else throw new Error('PermissionDeniedError');
+            }
+
+            // extension notified his presence
+            if (data == 'rtcmulticonnection-extension-loaded') {
+                DetectRTC.screen.chromeMediaSource = 'desktop';
+            }
+
+            // extension shared temp sourceId
+            if (data.sourceId) {
+                DetectRTC.screen.sourceId = data.sourceId;
+                if (DetectRTC.screenCallback) DetectRTC.screenCallback(DetectRTC.screen.sourceId);
+            }
+        }
+    };
+
+    // check if desktop-capture extension installed.
+    if (window.postMessage && DetectRTC.isChrome) {
+        DetectRTC.screen.isChromeExtensionAvailable();
+    }
+})();
+
+window.addEventListener('message', function (event) {
+    if (event.origin != window.location.origin) {
+        return;
+    }
+
+    DetectRTC.screen.onMessageCallback(event.data);
+});
+},{}],2:[function(require,module,exports){
 var WebRTC = require('webrtc');
 var WildEmitter = require('wildemitter');
 var webrtcSupport = require('webrtcsupport');
 var attachMediaStream = require('attachmediastream');
 var mockconsole = require('mockconsole');
 var io = require('socket.io-client');
+var DetectRTC = require('./detectRTC.js');
 
 
 function WebRTCClient(opts, roomName, username) {
@@ -184,21 +252,16 @@ function WebRTCClient(opts, roomName, username) {
         self.webrtc.sendToAll('mute', {name: 'video'});
     });
     this.webrtc.on('localScreen', function (stream) {
-        var item,
-            el = document.createElement('video'),
-            container = self.getRemoteVideoContainer();
-
-        el.oncontextmenu = function () {
+        var video = document.createElement('video');
+        video.oncontextmenu = function () {
             return false;
         };
-        el.id = 'localScreen';
-        attachMediaStream(stream, el);
-        if (container) {
-            container.appendChild(el);
-        }
+        video.id = 'localScreen';
+        attachMediaStream(stream, video);
 
-        self.emit('localScreenAdded', el);
+        self.emit('localScreenAdded', video);
         self.connection.emit('shareScreen');
+        self.webrtc.localScreens.push(stream);
 
         self.webrtc.peers.forEach(function (existingPeer) {
             var peer;
@@ -249,7 +312,8 @@ WebRTCClient.prototype.leaveRoom = function () {
             peer.end();
         });
         if (this.getLocalScreen()) {
-            this.stopScreenShare();
+//            this.stopScreenShare();
+            this.webrtc.localScreen.stop();
         }
         this.emit('leftRoom', this.roomName);
         this.roomName = undefined;
@@ -429,6 +493,113 @@ WebRTCClient.prototype.stopScreenShare = function () {
     //delete this.webrtc.localScreen;
 };
 
+WebRTCClient.prototype.captureUserMedia = function (callback, extensionAvailable) {
+    var self = this;
+
+    var screen_constraints = {
+        mandatory: {
+            chromeMediaSource: DetectRTC.screen.chromeMediaSource,
+            maxWidth: screen.width > 1920 ? screen.width : 1920,
+            maxHeight: screen.height > 1080 ? screen.height : 1080
+        },
+        optional: [
+            { // non-official Google-only optional constraints
+                googTemporalLayeredScreencast: true
+            },
+            {
+                googLeakyBucket: true
+            }
+        ]
+    };
+
+    // try to check if extension is installed.
+    if (DetectRTC.isChrome && typeof extensionAvailable == 'undefined' && DetectRTC.screen.chromeMediaSource != 'desktop') {
+        DetectRTC.screen.isChromeExtensionAvailable(function (available) {
+            self.captureUserMedia(callback, available);
+        });
+        return;
+    }
+
+    if (DetectRTC.isChrome && DetectRTC.screen.chromeMediaSource == 'desktop' && !DetectRTC.screen.sourceId) {
+        DetectRTC.screen.getSourceId(function (error) {
+            if (error && error == 'PermissionDeniedError') {
+                alert('PermissionDeniedError: User denied to share content of his screen.');
+            }
+
+            self.captureUserMedia(callback);
+        });
+        return;
+    }
+
+    // for non-www.webrtc-experiment.com domains
+    if (DetectRTC.isChrome && !DetectRTC.screen.sourceId) {
+        window.addEventListener('message', function (event) {
+            if (event.data && event.data.chromeMediaSourceId) {
+                var sourceId = event.data.chromeMediaSourceId;
+
+                DetectRTC.screen.sourceId = sourceId;
+                DetectRTC.screen.chromeMediaSource = 'desktop';
+
+                if (sourceId == 'PermissionDeniedError') {
+                    return alert('User denied to share content of his screen.');
+                }
+
+                self.captureUserMedia(callback, true);
+            }
+
+            if (event.data && event.data.chromeExtensionStatus) {
+                console.log('Screen capturing extension status is:', event.data.chromeExtensionStatus);
+                DetectRTC.screen.chromeMediaSource = 'screen';
+                self.captureUserMedia(callback, true);
+            }
+        });
+        return;
+    }
+
+    if (DetectRTC.isChrome && DetectRTC.screen.chromeMediaSource == 'desktop') {
+        screen_constraints.mandatory.chromeMediaSourceId = DetectRTC.screen.sourceId;
+    }
+
+    var constraints = {
+        audio: false,
+        video: screen_constraints
+    };
+
+    var Firefox_Screen_Capturing_Warning = 'Make sure that you are using Firefox Nightly and you enabled: media.getusermedia.screensharing.enabled flag from about:config page. You also need to add your domain in "media.getusermedia.screensharing.allowed_domains" flag.';
+    if (!!navigator.mozGetUserMedia) {
+        console.warn(Firefox_Screen_Capturing_Warning);
+        constraints.video = {
+            mozMediaSource: 'window',
+            mediaSource: 'window',
+            maxWidth: screen.width > 1920 ? screen.width : 1920,
+            maxHeight: screen.height > 1080 ? screen.height : 1080,
+            minAspectRatio: 1.77
+        };
+    }
+
+    console.log(JSON.stringify(constraints, null, '\t'));
+
+    window.navigator.getMedia = (window.navigator.getUserMedia ||
+        window.navigator.webkitGetUserMedia ||
+        window.navigator.mozGetUserMedia ||
+        window.navigator.msGetUserMedia);
+
+    window.navigator.getMedia(constraints, function (stream) {
+        self.webrtc.emit("localScreen", stream);
+        callback(null, stream);
+    }, function (err) {
+        if (DetectRTC.isChrome && location.protocol === 'http:') {
+            alert('Please test this WebRTC experiment on HTTPS.');
+        } else if (DetectRTC.isChrome) {
+            alert('Screen capturing is either denied or not supported. Please install chrome extension for screen capturing or run chrome with command-line flag: --enable-usermedia-screen-capturing');
+        }
+        else if (!!navigator.mozGetUserMedia) {
+            alert(Firefox_Screen_Capturing_Warning);
+        }
+        callback(err);
+    });
+};
+
 WebRTCClient.prototype.testReadiness = function () {
     var self = this;
     if (this.webrtc.localStream && this.sessionReady) {
@@ -453,7 +624,7 @@ WebRTCClient.prototype.sendFile = function () {
 
 module.exports = WebRTCClient;
 
-},{"attachmediastream":6,"mockconsole":5,"socket.io-client":7,"webrtc":2,"webrtcsupport":4,"wildemitter":3}],3:[function(require,module,exports){
+},{"./detectRTC.js":1,"attachmediastream":6,"mockconsole":7,"socket.io-client":8,"webrtc":3,"webrtcsupport":5,"wildemitter":4}],4:[function(require,module,exports){
 /*
 WildEmitter.js is a slim little event emitter by @henrikjoreteg largely based 
 on @visionmedia's Emitter from UI Kit.
@@ -595,18 +766,6 @@ WildEmitter.prototype.getWildcardCallbacks = function (eventName) {
 };
 
 },{}],5:[function(require,module,exports){
-var methods = "assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(",");
-var l = methods.length;
-var fn = function () {};
-var mockconsole = {};
-
-while (l--) {
-    mockconsole[methods[l]] = fn;
-}
-
-module.exports = mockconsole;
-
-},{}],4:[function(require,module,exports){
 // created by @HenrikJoreteg
 var prefix;
 var isChrome = false;
@@ -689,6 +848,18 @@ module.exports = function (stream, el, options) {
 };
 
 },{}],7:[function(require,module,exports){
+var methods = "assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(",");
+var l = methods.length;
+var fn = function () {};
+var mockconsole = {};
+
+while (l--) {
+    mockconsole[methods[l]] = fn;
+}
+
+module.exports = mockconsole;
+
+},{}],8:[function(require,module,exports){
 /*! Socket.IO.js build:0.9.16, development. Copyright(c) 2011 LearnBoost <dev@learnboost.com> MIT Licensed */
 
 var io = ('undefined' === typeof module ? {} : module.exports);
@@ -4562,7 +4733,7 @@ if (typeof define === "function" && define.amd) {
   define([], function () { return io; });
 }
 })();
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var events = require('events');
 
 exports.isArray = isArray;
@@ -4909,7 +5080,7 @@ exports.format = function(f) {
   return str;
 };
 
-},{"events":9}],2:[function(require,module,exports){
+},{"events":10}],3:[function(require,module,exports){
 var util = require('util');
 var webrtc = require('webrtcsupport');
 var WildEmitter = require('wildemitter');
@@ -5074,7 +5245,7 @@ WebRTC.prototype.sendDirectlyToAll = function (channel, message, payload) {
 
 module.exports = WebRTC;
 
-},{"./peer":10,"localmedia":11,"mockconsole":5,"util":8,"webrtcsupport":4,"wildemitter":3}],12:[function(require,module,exports){
+},{"./peer":11,"localmedia":12,"mockconsole":7,"util":9,"webrtcsupport":5,"wildemitter":4}],13:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -5129,7 +5300,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var process=require("__browserify_process");if (!process.EventEmitter) process.EventEmitter = function () {};
 
 var EventEmitter = exports.EventEmitter = process.EventEmitter;
@@ -5325,7 +5496,7 @@ EventEmitter.listenerCount = function(emitter, type) {
   return ret;
 };
 
-},{"__browserify_process":12}],10:[function(require,module,exports){
+},{"__browserify_process":13}],11:[function(require,module,exports){
 var util = require('util');
 var webrtc = require('webrtcsupport');
 var PeerConnection = require('rtcpeerconnection');
@@ -5372,10 +5543,14 @@ function Peer(options) {
     this.pc.on('signalingStateChange', this.emit.bind(this, 'signalingStateChange'));
     this.logger = this.parent.logger;
 
+    console.log("#####$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
+    console.log(options.type, this.sharemyscreen, this.parent.localScreen);
     // handle screensharing/broadcast mode
     if (options.type === 'screen') {
         if (this.parent.localScreen && this.sharemyscreen) {
             this.logger.log('adding local screen stream to peer connection');
+            console.log("###############################");
+            console.log(this.parent.localScreen);
             this.pc.addStream(this.parent.localScreen);
             this.broadcaster = options.broadcaster;
         }
@@ -5538,7 +5713,7 @@ Peer.prototype.handleDataChannelAdded = function (channel) {
 
 module.exports = Peer;
 
-},{"rtcpeerconnection":13,"util":8,"webrtcsupport":4,"wildemitter":3}],14:[function(require,module,exports){
+},{"rtcpeerconnection":14,"util":9,"webrtcsupport":5,"wildemitter":4}],15:[function(require,module,exports){
 // getUserMedia helper by @HenrikJoreteg
 var func = (window.navigator.getUserMedia ||
             window.navigator.webkitGetUserMedia ||
@@ -5602,7 +5777,7 @@ module.exports = function (constraints, cb) {
     });
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var util = require('util');
 var hark = require('hark');
 var webrtc = require('webrtcsupport');
@@ -5880,7 +6055,7 @@ Object.defineProperty(LocalMedia.prototype, 'localScreen', {
 
 module.exports = LocalMedia;
 
-},{"getscreenmedia":16,"getusermedia":14,"hark":15,"mediastream-gain":17,"mockconsole":5,"util":8,"webrtcsupport":4,"wildemitter":3}],18:[function(require,module,exports){
+},{"getscreenmedia":17,"getusermedia":15,"hark":16,"mediastream-gain":18,"mockconsole":7,"util":9,"webrtcsupport":5,"wildemitter":4}],19:[function(require,module,exports){
 //     Underscore.js 1.7.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -7297,7 +7472,7 @@ module.exports = LocalMedia;
   }
 }.call(this));
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var support = require('webrtcsupport');
 
 
@@ -7344,7 +7519,45 @@ GainController.prototype.on = function () {
 
 module.exports = GainController;
 
-},{"webrtcsupport":19}],20:[function(require,module,exports){
+},{"webrtcsupport":20}],20:[function(require,module,exports){
+// created by @HenrikJoreteg
+var prefix;
+var isChrome = false;
+var isFirefox = false;
+var ua = window.navigator.userAgent.toLowerCase();
+
+// basic sniffing
+if (ua.indexOf('firefox') !== -1) {
+    prefix = 'moz';
+    isFirefox = true;
+} else if (ua.indexOf('chrome') !== -1) {
+    prefix = 'webkit';
+    isChrome = true;
+}
+
+var PC = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
+var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
+var MediaStream = window.webkitMediaStream || window.MediaStream;
+var screenSharing = window.location.protocol === 'https:' && window.navigator.userAgent.match('Chrome') && parseInt(window.navigator.userAgent.match(/Chrome\/(.*) /)[1], 10) >= 26;
+var AudioContext = window.webkitAudioContext || window.AudioContext;
+
+
+// export support flags and constructors.prototype && PC
+module.exports = {
+    support: !!PC,
+    dataChannel: isChrome || isFirefox || (PC && PC.prototype && PC.prototype.createDataChannel),
+    prefix: prefix,
+    webAudio: !!(AudioContext && AudioContext.prototype.createMediaStreamSource),
+    mediaStream: !!(MediaStream && MediaStream.prototype.removeTrack),
+    screenSharing: !!screenSharing,
+    AudioContext: AudioContext,
+    PeerConnection: PC,
+    SessionDescription: SessionDescription,
+    IceCandidate: IceCandidate
+};
+
+},{}],21:[function(require,module,exports){
 var tosdp = require('./lib/tosdp');
 var tojson = require('./lib/tojson');
 
@@ -7357,7 +7570,7 @@ exports.toSessionJSON = tojson.toSessionJSON;
 exports.toMediaJSON = tojson.toMediaJSON;
 exports.toCandidateJSON = tojson.toCandidateJSON;
 
-},{"./lib/tojson":22,"./lib/tosdp":21}],13:[function(require,module,exports){
+},{"./lib/tojson":23,"./lib/tosdp":22}],14:[function(require,module,exports){
 var _ = require('underscore');
 var util = require('util');
 var webrtc = require('webrtcsupport');
@@ -7821,7 +8034,7 @@ PeerConnection.prototype.getStats = function (cb) {
 
 module.exports = PeerConnection;
 
-},{"sdp-jingle-json":20,"traceablepeerconnection":23,"underscore":18,"util":8,"webrtcsupport":4,"wildemitter":3}],16:[function(require,module,exports){
+},{"sdp-jingle-json":21,"traceablepeerconnection":24,"underscore":19,"util":9,"webrtcsupport":5,"wildemitter":4}],17:[function(require,module,exports){
 // getScreenMedia helper by @HenrikJoreteg
 var getUserMedia = require('getusermedia');
 
@@ -7847,7 +8060,7 @@ module.exports = function (constraints, cb) {
         if (chromever >= 26 && chromever <= maxver) {
             // chrome 26 - chrome 33 way to do it -- requires bad chrome://flags
             // note: this is basically in maintenance mode and will go away soon
-            constraints = (hasConstraints && constraints) || { 
+            constraints = (hasConstraints && constraints) || {
                 video: {
                     mandatory: {
                         googLeakyBucket: true,
@@ -7937,45 +8150,7 @@ window.addEventListener('message', function (event) {
     }
 });
 
-},{"getusermedia":14}],19:[function(require,module,exports){
-// created by @HenrikJoreteg
-var prefix;
-var isChrome = false;
-var isFirefox = false;
-var ua = window.navigator.userAgent.toLowerCase();
-
-// basic sniffing
-if (ua.indexOf('firefox') !== -1) {
-    prefix = 'moz';
-    isFirefox = true;
-} else if (ua.indexOf('chrome') !== -1) {
-    prefix = 'webkit';
-    isChrome = true;
-}
-
-var PC = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-var IceCandidate = window.mozRTCIceCandidate || window.RTCIceCandidate;
-var SessionDescription = window.mozRTCSessionDescription || window.RTCSessionDescription;
-var MediaStream = window.webkitMediaStream || window.MediaStream;
-var screenSharing = window.location.protocol === 'https:' && window.navigator.userAgent.match('Chrome') && parseInt(window.navigator.userAgent.match(/Chrome\/(.*) /)[1], 10) >= 26;
-var AudioContext = window.webkitAudioContext || window.AudioContext;
-
-
-// export support flags and constructors.prototype && PC
-module.exports = {
-    support: !!PC,
-    dataChannel: isChrome || isFirefox || (PC && PC.prototype && PC.prototype.createDataChannel),
-    prefix: prefix,
-    webAudio: !!(AudioContext && AudioContext.prototype.createMediaStreamSource),
-    mediaStream: !!(MediaStream && MediaStream.prototype.removeTrack),
-    screenSharing: !!screenSharing,
-    AudioContext: AudioContext,
-    PeerConnection: PC,
-    SessionDescription: SessionDescription,
-    IceCandidate: IceCandidate
-};
-
-},{}],21:[function(require,module,exports){
+},{"getusermedia":15}],22:[function(require,module,exports){
 var senders = {
     'initiator': 'sendonly',
     'responder': 'recvonly',
@@ -8189,7 +8364,7 @@ exports.toCandidateSDP = function (candidate) {
     return 'a=candidate:' + sdp.join(' ');
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 // created by @HenrikJoreteg
 var prefix;
 var isChrome = false;
@@ -8227,7 +8402,7 @@ module.exports = {
     IceCandidate: IceCandidate
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var WildEmitter = require('wildemitter');
 
 function getMaxVolume (analyser, fftBins) {
@@ -8357,7 +8532,7 @@ module.exports = function(stream, options) {
   return harker;
 }
 
-},{"wildemitter":3}],22:[function(require,module,exports){
+},{"wildemitter":4}],23:[function(require,module,exports){
 var parsers = require('./parsers');
 var idCounter = Math.random();
 
@@ -8547,7 +8722,7 @@ exports.toCandidateJSON = function (line) {
     return candidate;
 };
 
-},{"./parsers":25}],25:[function(require,module,exports){
+},{"./parsers":26}],26:[function(require,module,exports){
 exports.lines = function (sdp) {
     return sdp.split('\r\n').filter(function (line) {
         return line.length > 0;
@@ -8808,7 +8983,7 @@ exports.bandwidth = function (line) {
     return parsed;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 // based on https://github.com/ESTOS/strophe.jingle/
 // adds wildemitter support
 var util = require('util');
@@ -9028,6 +9203,6 @@ TraceablePeerConnection.prototype.getStats = function (callback, errback) {
 
 module.exports = TraceablePeerConnection;
 
-},{"util":8,"webrtcsupport":24,"wildemitter":3}]},{},[1])(1)
+},{"util":9,"webrtcsupport":25,"wildemitter":4}]},{},[2])(2)
 });
 ;
